@@ -1,0 +1,83 @@
+Black-crowned Night Heron
+/datasets/vb100_video/stimuli/Black-crowned_Night_Heron/Black-crowned_Night_Heron_00011.mp4
+/datasets/vb100_video/stimuli/Black-crowned_Night_Heron/Black-crowned_Night_Heron_00005.mp4
+Brown Pelican
+/datasets/vb100_video/stimuli/Brown_Pelican/Brown_Pelican_00004.mp4
+/datasets/vb100_video/stimuli/Brown_Pelican/Brown_Pelican_00010.mp4
+Black Turnstone
+/datasets/vb100_video/stimuli/Black_Turnstone/Black_Turnstone_00002.mp4
+/datasets/vb100_video/stimuli/Black_Turnstone/Black_Turnstone_00016.mp4
+Blue-winged Teal
+/datasets/vb100_video/stimuli/Blue-winged_Teal/Blue-winged_Teal_00008.mp4
+/datasets/vb100_video/stimuli/Blue-winged_Teal/Blue-winged_Teal_00009.mp4
+American Purple Gallinule
+/datasets/vb100_video/stimuli/American_Purple_Gallinule/American_Purple_Gallinule_00001.mp4
+/datasets/vb100_video/stimuli/American_Purple_Gallinule/American_Purple_Gallinule_00002.mp4
+Allen Hummingbird
+/datasets/vb100_video/stimuli/Allen_Hummingbird/Allen_Hummingbird_00001.mp4
+/datasets/vb100_video/stimuli/Allen_Hummingbird/Allen_Hummingbird_00015.mp4
+Acorn Woodpecker
+/datasets/vb100_video/stimuli/Acorn_Woodpecker/Acorn_Woodpecker_00008.mp4
+/datasets/vb100_video/stimuli/Acorn_Woodpecker/Acorn_Woodpecker_00009.mp4
+American Rock Wren
+/datasets/vb100_video/stimuli/American_Rock_Wren/American_Rock_Wren_00009.mp4
+/datasets/vb100_video/stimuli/American_Rock_Wren/American_Rock_Wren_00008.mp4
+Black Phoebe
+/datasets/vb100_video/stimuli/Black_Phoebe/Black_Phoebe_00008.mp4
+/datasets/vb100_video/stimuli/Black_Phoebe/Black_Phoebe_00009.mp4
+Black-winged Stilt
+/datasets/vb100_video/stimuli/Black-winged_Stilt/Black-winged_Stilt_00008.mp4
+/datasets/vb100_video/stimuli/Black-winged_Stilt/Black-winged_Stilt_00009.mp4
+American Avocet
+/datasets/vb100_video/stimuli/American_Avocet/American_Avocet_00009.mp4
+/datasets/vb100_video/stimuli/American_Avocet/American_Avocet_00008.mp4
+Band-tailed Pigeon
+/datasets/vb100_video/stimuli/Band-tailed_Pigeon/Band-tailed_Pigeon_00010.mp4
+/datasets/vb100_video/stimuli/Band-tailed_Pigeon/Band-tailed_Pigeon_00004.mp4
+Baird Sandpiper
+/datasets/vb100_video/stimuli/Baird_Sandpiper/Baird_Sandpiper_00009.mp4
+/datasets/vb100_video/stimuli/Baird_Sandpiper/Baird_Sandpiper_00008.mp4
+/datasets/vb100_video/stimuli/Black-chinned_Hummingbird/Black-chinned_Hummingbird_00002.mp4
+/datasets/vb100_video/stimuli/Black-chinned_Hummingbird/Black-chinned_Hummingbird_00016.mp4
+American Black Oystercatcher
+/datasets/vb100_video/stimuli/American_Black_Oystercatcher/American_Black_Oystercatcher_00008.mp4
+/datasets/vb100_video/stimuli/American_Black_Oystercatcher/American_Black_Oystercatcher_00009.mp4
+Black Skimmer
+/datasets/vb100_video/stimuli/Black_Skimmer/Black_Skimmer_00006.mp4
+/datasets/vb100_video/stimuli/Black_Skimmer/Black_Skimmer_00012.mp4
+Black-bellied Whistling Duck
+/datasets/vb100_video/stimuli/Black-bellied_Whistling_Duck/Black-bellied_Whistling_Duck_00009.mp4
+/datasets/vb100_video/stimuli/Black-bellied_Whistling_Duck/Black-bellied_Whistling_Duck_00008.mp4
+Burrowing Owl
+/datasets/vb100_video/stimuli/Burrowing_Owl/Burrowing_Owl_00013.mp4
+/datasets/vb100_video/stimuli/Burrowing_Owl/Burrowing_Owl_00007.mp4
+/datasets/birds_audio/american_robin/XC457206-American_Robin-Turdus_migratorius.mp3
+/datasets/birds_audio/american_robin/XC364119-American_Robin-Turdus_migratorius.mp3
+/datasets/birds_audio/american_robin/XC451211-American_Robin-Turdus_migratorius.mp3
+/datasets/birds_audio/american_robin/XC452609-American_Robin-Turdus_migratorius.mp3
+/datasets/birds_audio/american_robin/XC422780-American_Robin-Turdus_migratorius.mp3
+/datasets/birds_audio/american_robin/XC361931-American_Robin-Turdus_migratorius.mp3
+/datasets/birds_audio/american_robin/XC364638-American_Robin-Turdus_migratorius.mp3
+/datasets/birds_audio/american_robin/XC459052-American_Robin-Turdus_migratorius.mp3
+/datasets/birds_audio/american_robin/XC418153-American_Robin-Turdus_migratorius.mp3
+/datasets/birds_audio/american_robin/XC456750-American_Robin-Turdus_migratorius.mp3
+/datasets/birds_audio/house_sparrow/XC462188-House_Sparrow-Passer_domesticus.mp3
+/datasets/birds_audio/house_sparrow/XC463361-House_Sparrow-Passer_domesticus.mp3
+/datasets/birds_audio/house_sparrow/XC449555-House_Sparrow-Passer_domesticus.mp3
+/datasets/birds_audio/house_sparrow/XC459146-House_Sparrow-Passer_domesticus.mp3
+/datasets/birds_audio/house_sparrow/XC459451-House_Sparrow-Passer_domesticus.mp3
+/datasets/birds_audio/house_sparrow/XC454685-House_Sparrow-Passer_domesticus.mp3
+/datasets/birds_audio/house_sparrow/XC459880-House_Sparrow-Passer_domesticus.mp3
+/datasets/birds_audio/house_sparrow/XC457180-House_Sparrow-Passer_domesticus.mp3
+/datasets/birds_audio/house_sparrow/XC459144-House_Sparrow-Passer_domesticus.mp3
+/datasets/birds_audio/house_sparrow/XC460279-House_Sparrow-Passer_domesticus.mp3
+/datasets/birds_audio/asian_koel/XC426538-Asian_Koel-Eudynamys_scolopaceus.mp3
+/datasets/birds_audio/asian_koel/XC461634-Asian_Koel-Eudynamys_scolopaceus.mp3
+/datasets/birds_audio/asian_koel/XC454504-Asian_Koel-Eudynamys_scolopaceus.mp3
+/datasets/birds_audio/asian_koel/XC444228-Asian_Koel-Eudynamys_scolopaceus_scolopaceus.mp3
+/datasets/birds_audio/asian_koel/XC461227-Asian_Koel-Eudynamys_scolopaceus.mp3
+/datasets/birds_audio/asian_koel/XC453708-Asian_Koel-Eudynamys_scolopaceus.mp3
+/datasets/birds_audio/asian_koel/XC461162-Asian_Koel-Eudynamys_scolopaceus.mp3
+/datasets/birds_audio/asian_koel/XC426536-Asian_Koel-Eudynamys_scolopaceus.mp3
+/datasets/birds_audio/asian_koel/XC450405-Asian_Koel-Eudynamys_scolopaceus.mp3
+/datasets/birds_audio/asian_koel/XC446446-Asian_Koel-Eudynamys_scolopaceus.mp3

@@ -1,0 +1,12 @@
+{
+    "generator": "stochastic",
+    "consent": "consent.html",
+    "survey": "survey.html",
+    "docket_spec": {
+        "n_trial": 30,
+        "n_catch": 1,
+        "n_reference": 8,
+        "n_select": 2,
+        "is_ranked": true
+    }
+}
