@@ -104,69 +104,41 @@
     // Proposal
     // pass current controller state to initialize.php
     //     it will handle appropriate logic and return complete controller state
-    //     overhead: docket
-
-    var newAssignment = true;
-    var controllerStateOld = {};
-    var protocolId = "";
-    if (sessionStorage.getObject(projectId)) {
-        newAssignment = false;
-        controllerStateOld = sessionStorage.getObject(projectId);
-        protocolId = controllerStateOld.protocolId;
-    }
-
+    //     potential overhead: docket
     var stimulusList = [];
     var controllerState = {};
-    // TODO inside initialize.php
-    // handle new session logic
-    // TODO have to store protocol ID, because need to know what instructions, etc. to use
+    if (sessionStorage.getObject(projectId)) {
+        controllerState = sessionStorage.getObject(projectId);
+    } else {
+        controllerState = {
+            projectId: projectId
+        };
+    }
 
     var dataToPost = {
-        projectId: projectId, protocolId: protocolId, workerId: workerId,
+        workerId: workerId,
         amtAssignmentId: amtAssignmentId, amtHitId: amtHitId,
-        browser: userInfo["browserName"], platform: userInfo["userPlatform"]
+        browser: userInfo["browserName"], platform: userInfo["userPlatform"],
+        controllerState: JSON.stringify(controllerState)
     }
     $(document).ready(function () {
         var fetchProject = $.post( "../psiz-collect/php/initialize.php", dataToPost, function(result) {
             var projectConfig = JSON.parse(result);
             stimulusList = projectConfig["stimulusList"];
-            protocolId = projectConfig["protocolId"];
+            controllerState = projectConfig["controllerState"];
 
             // Set any custom content.
-            var htmlConsent = projectConfig["consent"];
-            if (htmlConsent != null) {
-                $( ".consent__content" ).html(htmlConsent);
+            if (projectConfig["consent"] != null) {
+                $( ".consent__content" ).html(projectConfig["consent"]);
             }
-            var htmlInstructions = projectConfig["instructions"];
-            if (htmlInstructions != null) {
-                $( ".instructions__content" ).html(htmlInstructions);
+            if (projectConfig["instructions"] != null) {
+                $( ".instructions__content" ).html(projectConfig["instructions"]);
             }
-            var htmlSurvey = projectConfig["survey"];
-            if (htmlSurvey != null) {
-                $( ".survey__content" ).html(htmlSurvey);
+            if (projectConfig["survey"] != null) {
+                $( ".survey__content" ).html(projectConfig["survey"]);
             }
-
-            var assignmentId = "";
-            var docket = {};
-            var trialIdx = 0;
-            if (newAssignment) {
-                assignmentId = projectConfig["assignmentId"];
-                docket = projectConfig["docket"];
-                trialIdx = 0
-            } else {
-                assignmentId = controllerStateOld.assignmentId;
-                docket = controllerStateOld.docket;
-                trialIdx = controllerStateOld.trialIdx;
-            }
-            controllerState = {
-                assignmentId: assignmentId,
-                projectId: projectId,
-                protocolId: protocolId,
-                docket: docket,
-                trialIdx: trialIdx,
-                isSurvey: (htmlSurvey != null)
-            };
-            // TODO save controller state to session variable.
+            // Save controller state to session variable. 
+            // sessionStorage.setObject(controllerState.projectId, controllerState);
         });
         $.when(fetchProject).done(function() {
             // Launch application.
