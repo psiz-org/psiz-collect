@@ -95,59 +95,80 @@
     <script src="../psiz-collect/static/js/utils.js"></script>
     <script type="text/javascript">
     var info = <?php require "./php/queryString.php"; ?>;
-    var experimentId = info["experimentId"];
+    var projectId = info["projectId"];
+    var workerId = info['workerId']  // TODO
+    var amtAssignmentId = info["assignmentId"]
+    var amtHitId = info["hitId"]
+    var userInfo = userSystemInfo();
 
-    // TODO
-    // log user's protocol assignment       
-    // user info ?
-    var newSession = true;
+    // Proposal
+    // pass current controller state to initialize.php
+    //     it will handle appropriate logic and return complete controller state
+    //     overhead: docket
+
+    var newAssignment = true;
     var controllerStateOld = {};
-    if (sessionStorage.getObject(experimentId)) {
-        newSession = false;
-        controllerStateOld = sessionStorage.getObject(experimentId);
+    var protocolId = "";
+    if (sessionStorage.getObject(projectId)) {
+        newAssignment = false;
+        controllerStateOld = sessionStorage.getObject(projectId);
+        protocolId = controllerStateOld.protocolId;
     }
 
     var stimulusList = [];
     var controllerState = {};
-    var userInfo = [];
+    // TODO inside initialize.php
+    // handle new session logic
+    // TODO have to store protocol ID, because need to know what instructions, etc. to use
 
-    var dataToPost = {experimentId: experimentId, newSession: newSession}
+    var dataToPost = {
+        projectId: projectId, protocolId: protocolId, workerId: workerId,
+        amtAssignmentId: amtAssignmentId, amtHitId: amtHitId,
+        browser: userInfo["browserName"], platform: userInfo["userPlatform"]
+    }
     $(document).ready(function () {
-        var fetchExperiment = $.post( "../psiz-collect/php/fetch-experiment.php", dataToPost, function(result) {
-            var expConfig = JSON.parse(result);
-            stimulusList = expConfig["stimulusList"];
-            var htmlInstructions = expConfig["instructions"];
-            var htmlConsent = expConfig["consent"];
-            var htmlSurvey = expConfig["survey"];
+        var fetchProject = $.post( "../psiz-collect/php/initialize.php", dataToPost, function(result) {
+            var projectConfig = JSON.parse(result);
+            stimulusList = projectConfig["stimulusList"];
+            protocolId = projectConfig["protocolId"];
+
             // Set any custom content.
+            var htmlConsent = projectConfig["consent"];
             if (htmlConsent != null) {
                 $( ".consent__content" ).html(htmlConsent);
             }
+            var htmlInstructions = projectConfig["instructions"];
             if (htmlInstructions != null) {
                 $( ".instructions__content" ).html(htmlInstructions);
             }
+            var htmlSurvey = projectConfig["survey"];
             if (htmlSurvey != null) {
                 $( ".survey__content" ).html(htmlSurvey);
             }
 
-            var docket = {}
+            var assignmentId = "";
+            var docket = {};
             var trialIdx = 0;
-            if (newSession) {
-                docket = expConfig["docket"];
+            if (newAssignment) {
+                assignmentId = projectConfig["assignmentId"];
+                docket = projectConfig["docket"];
                 trialIdx = 0
             } else {
+                assignmentId = controllerStateOld.assignmentId;
                 docket = controllerStateOld.docket;
                 trialIdx = controllerStateOld.trialIdx;
             }
             controllerState = {
-                experimentId: experimentId,
-                trialIdx: trialIdx,
+                assignmentId: assignmentId,
+                projectId: projectId,
+                protocolId: protocolId,
                 docket: docket,
-                isSurvey: (htmlSurvey != null),
-                userInfo: userInfo
+                trialIdx: trialIdx,
+                isSurvey: (htmlSurvey != null)
             };
+            // TODO save controller state to session variable.
         });
-        $.when(fetchExperiment).done(function() {
+        $.when(fetchProject).done(function() {
             // Launch application.
             appController = new AppController(stimulusList, controllerState);
         });

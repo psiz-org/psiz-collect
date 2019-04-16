@@ -11,13 +11,12 @@
 *    non-existent stimuli or improper dockets.
 */
 
-// TODO stop start time when showing instructions
+// TODO erase session variable when assignment is completed
 // TODO make sure new assignment isn't created on page reload
 // TODO add optional comments input at end of experiment (need to add table to database as well)
-// TODO clear session variable upon completion
 // TODO variable and function names as camel case
 // TODO session storage
-// sessionStorage.setObject(controllerState.experimentId, controllerState);
+// sessionStorage.setObject(controllerState.projectId, controllerState);
 
 class Stopwatch {
 
@@ -216,15 +215,15 @@ var AppController = function(stimulusList, controllerState) {
         // Update progress indicator.
         $('#grid__progress-counter').text(controllerState.trialIdx);
         // Set instructions.
-        if (trial.n_select == 1) {
+        if (trial.nSelect == 1) {
             $(".text-n-select").text("")
             $(".text-tile-grammar").text("tile")
             // $(".grid__prompt-text").text("Select a tile")
         } else {
-            $(".text-n-select").text(trial.n_select)
+            $(".text-n-select").text(trial.nSelect)
             $(".text-tile-grammar").text("tiles")
-            // $(".grid__prompt-text").text("Select " + trial.n_select + " tiles")
-            if (trial.is_ranked) {
+            // $(".grid__prompt-text").text("Select " + trial.nSelect + " tiles")
+            if (trial.isRanked) {
                 $(".is-ranked").show();
             }
         }
@@ -271,8 +270,8 @@ var AppController = function(stimulusList, controllerState) {
         // TODO is hard-coded N_CHOICE_TILE an issue?
         var selectionState = {
             nChoice: trial.references.length,
-            nSelect: trial.n_select,
-            isRanked: trial.is_ranked,
+            nSelect: trial.nSelect,
+            isRanked: trial.isRanked,
             nSelected: 0,
             isTileSelected: zeros(N_CHOICE_TILE)
         }
@@ -527,6 +526,17 @@ var AppController = function(stimulusList, controllerState) {
         return {referenceList: referenceList, nReference: nReference, nSelected: nSelected};
     }
 
+    function postObs(){
+        var dataToPost = {
+            projectId: controllerState.projectId,
+            assignmentId: cfg.dbAssignmentId,
+            obs: controllerState.docket
+        };
+
+        var postData = $.post( "../psiz-collect/php/postObs.php", controllerState.docket, function(result) {
+        });
+    }
+
     function postTrial(queryFilename, nReference, nSelected, isCatchTrial, isCatchTrialCorrect, referenceJson) {
         if (cfg.doRecord) {
             var dataToPost = {
@@ -648,7 +658,6 @@ var AppController = function(stimulusList, controllerState) {
 
     // Update the seek bar as the video plays
     $('.tile__video').on('timeupdate', function() {
-        // var tileId = this.id;
         var video = $(this);
         // Calculate the slider value
         var value = (100 / video[0].duration) * video[0].currentTime;
@@ -658,7 +667,6 @@ var AppController = function(stimulusList, controllerState) {
     });
 
     $('.tile__audio').on('timeupdate', function() {
-        // var tileId = this.id;
         var audio = $(this);
         // Calculate the slider value
         var value = (100 / audio[0].duration) * audio[0].currentTime;
@@ -687,23 +695,28 @@ var AppController = function(stimulusList, controllerState) {
             stopwatch.stop()
             totalTimeMs = stopwatch.total();
 
+            // Re-arrange trial docket into observation format.
             var trial = controllerState.docket[controllerState.trialIdx];
-            
-            // TODO
-            // var queryFilename = basename(stimulusList[trial.query]);
-            // var isCatchTrial = trial.is_catch;
-            // var isCatchTrialCorrect = 0;
-            // if (isCatchTrial) {
-            //     isCatchTrialCorrect = gradeCatchTrial(trial, selectionState);
-            // }
-            // var referenceInfo = inferFilenameReferences(trial, selectionState);
-            // var filenameReferenceList = referenceInfo.referenceList;
-            // var referenceJson = JSON.stringify(filenameReferenceList);
-            // postTrial(queryFilename, referenceInfo.nReference, referenceInfo.nSelected, isCatchTrial, isCatchTrialCorrect, referenceJson);
+            // console.log("references: " + trial.references)
+            // console.log("selectionState: " + selectionState.isTileSelected)
+            var obsIdx = []
+            for (var iSelection = 1; iSelection <= trial.nSelect; iSelection++) {
+                var idx = selectionState.isTileSelected.indexOf(iSelection)
+                obsIdx.push(trial.references[idx])
+            }
+            for (var iReference = 0; iReference < trial.references.length; iReference++) {
+                if (selectionState.isTileSelected[iReference] == 0) {
+                    obsIdx.push(trial.references[iReference])
+                }
+            }
+            trial.references = obsIdx
+            // console.log("references: " + controllerState.docket[controllerState.trialIdx].references)
+            trial.rt_ms = totalTimeMs
+            // trial.isCatchTrialCorrect = gradeCatchTrial(trial) TODO
 
             controllerState.trialIdx += 1;
-            // Now that trial is finished update sessionStorage
-            // sessionStorage.setObject(sessionKeyName, controllerState); TODO
+            // Now that trial is finished, update sessionStorage to save progress.
+            // sessionStorage.setObject(controllerState.projectId, controllerState); TODO
             next(controllerState);
         }
     });

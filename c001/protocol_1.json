@@ -1,56 +1,56 @@
 {
     "generator": "deterministic",
     "instructions": "instructions.html",
-    "shuffle_trials": true,
+    "shuffleTrials": true,
 	"docket": [
 		{
 			"query": 99,
 			"references": [24, 55],
-			"n_select": 1,
-            "is_ranked": true,
-            "is_catch": false
+			"nSelect": 1,
+            "isRanked": true,
+            "isCatch": false
 		},
 		{
 			"query": 38,
 			"references": [46, 52, 12, 11],
-			"n_select": 2,
-            "is_ranked": true,
-            "is_catch": false
+			"nSelect": 2,
+            "isRanked": true,
+            "isCatch": false
         },
         {
 			"query": 38,
 			"references": [46, 52, 12, 11],
-			"n_select": 2,
-            "is_ranked": false,
-            "is_catch": false
+			"nSelect": 2,
+            "isRanked": false,
+            "isCatch": false
 		},
 		{
 			"query": 23,
 			"references": [34, 56, 24, 34, 45, 2, 32, 89],
-			"n_select": 2,
-            "is_ranked": true,
-            "is_catch": false
+			"nSelect": 2,
+            "isRanked": true,
+            "isCatch": false
 		},
 		{
 			"query": 41,
 			"references": [56, 93, 4, 3, 88, 25, 39, 67],
-			"n_select": 3,
-            "is_ranked": true,
-            "is_catch": false
+			"nSelect": 3,
+            "isRanked": true,
+            "isCatch": false
         },
         {
 			"query": 41,
 			"references": [56, 93, 67],
-			"n_select": 1,
-            "is_ranked": true,
-            "is_catch": false
+			"nSelect": 1,
+            "isRanked": true,
+            "isCatch": false
 		},
 		{
 			"query": 63,
 			"references": [90, 45, 44, 13, 28, 56, 34, 101],
-			"n_select": 2,
-            "is_ranked": true,
-            "is_catch": false
+			"nSelect": 2,
+            "isRanked": true,
+            "isCatch": false
 		}
     ]
 }

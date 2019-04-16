@@ -1,10 +1,10 @@
 {
     "generator": "stochastic",
-    "docket_spec": {
-        "n_trial": 30,
-        "n_catch": 0,
-        "n_reference": 2,
-        "n_select": 1,
-        "is_ranked": true
+    "docketSpec": {
+        "nTrial": 30,
+        "nCatch": 0,
+        "nReference": 2,
+        "nSelect": 1,
+        "isRanked": true
     }
 }
