@@ -27,7 +27,25 @@
         <p>Instructions for enabling Javascript in your browser can be found <a href="http://support.google.com/bin/answer.py?hl=en&answer=23852">here</a></p>
     </noscript>
     
-    <div class="consent">
+    <div class="container login">
+        <div class="row">
+            <div class="col"></div>
+            <div class="col-6">
+                <h1 class="login__heading">Login</h1>
+                <input id="login__input" type="text" size="40" placeholder="Enter your participant code." onblur="this.focus()" autocomplete="off" autofocus="true" spellcheck="false"/>
+            </div>
+            <div class="col"></div>
+        </div>
+        <div class="row">
+            <div class="col"></div>
+            <div class="col-xs-3 col-md-2">
+                <div id='login__button' class='custom-button custom-button--enabled'>OK</div>
+            </div>
+            <div class="col"></div>
+        </div>
+    </div>
+
+    <div class="container consent">
         <div class="row">
             <div class="col-xs-1 col-md-2"></div>
             <div class="consent__content col-xs-10 col-md-8">
@@ -44,7 +62,7 @@
         </div>
     </div>
 
-    <div class="instructions">
+    <div class="container instructions">
         <div class="row">
             <div class="col-xs-1 col-md-3"></div>
             <div class="instructions__content col-xs-10 col-md-6">
@@ -74,7 +92,7 @@
         </div>
     </div>
 
-    <div class="survey">
+    <div class="container survey">
         <div class="row">
             <div class="col-xs-1 col-md-2"></div>
             <div class="survey__content col-xs-10 col-md-8"></div>
@@ -94,38 +112,67 @@
     <script src="../psiz-collect/static/js/AppController.js"></script>
     <script src="../psiz-collect/static/js/utils.js"></script>
     <script type="text/javascript">
-    var info = <?php require "./php/queryString.php"; ?>;
-    var projectId = info["projectId"];
-    var workerId = info['workerId']  // TODO
-    var amtAssignmentId = info["assignmentId"]
-    var amtHitId = info["hitId"]
-    var userInfo = userSystemInfo();
+    var queryVariables = <?php require "./php/queryString.php"; ?>;
+    var client = clientInfo();
 
-    // Proposal
-    // pass current controller state to initialize.php
-    //     it will handle appropriate logic and return complete controller state
-    //     potential overhead: docket
     var stimulusList = [];
-    var controllerState = {};
-    if (sessionStorage.getObject(projectId)) {
-        controllerState = sessionStorage.getObject(projectId);
+    var appState = {};
+    if (sessionStorage.getObject(queryVariables["projectId"])) {
+        appState = sessionStorage.getObject(queryVariables["projectId"]);
     } else {
-        controllerState = {
-            projectId: projectId
+        if (queryVariables["assignmentId"] == null) {
+            queryVariables["assignmentId"] = "";
+            queryVariables["hitId"] = "";
+        }
+        appState = {
+            projectId: queryVariables["projectId"],
+            workerId: queryVariables['workerId'],
+            amtAssignmentId: queryVariables["assignmentId"],
+            amtHitId: queryVariables["hitId"],
+            browser: client["browser"],
+            platform: client["platform"],
         };
     }
-
-    var dataToPost = {
-        workerId: workerId,
-        amtAssignmentId: amtAssignmentId, amtHitId: amtHitId,
-        browser: userInfo["browserName"], platform: userInfo["userPlatform"],
-        controllerState: JSON.stringify(controllerState)
-    }
+    
     $(document).ready(function () {
+        // If there is no workerId show login, otherwise proceed.
+        if (appState['workerId'] == null) {
+            $(".login").show(0);
+        } else {
+            launchController();
+        }
+    });
+
+    $("#login__button").click( function() {
+        $(".login").hide(0);
+        var workerId = $("#login__input").val();
+        if (workerId == "") {
+            workerId = "guest";
+        }
+        appState['workerId'] = workerId;
+        launchController();
+    });
+
+    $("#login__input").on('keypress',function(e) {
+        if(e.which == 13) {
+            $(".login").hide(0);
+            var workerId = $("#login__input").val();
+            if (workerId == "") {
+                workerId = "guest";
+            }
+            appState['workerId'] = workerId;
+            launchController();
+        }
+    });
+
+    function launchController() {
+        var dataToPost = {
+            appState: JSON.stringify(appState)
+        }
         var fetchProject = $.post( "../psiz-collect/php/initialize.php", dataToPost, function(result) {
             var projectConfig = JSON.parse(result);
             stimulusList = projectConfig["stimulusList"];
-            controllerState = projectConfig["controllerState"];
+            appState = projectConfig["appState"];
 
             // Set any custom content.
             if (projectConfig["consent"] != null) {
@@ -137,14 +184,16 @@
             if (projectConfig["survey"] != null) {
                 $( ".survey__content" ).html(projectConfig["survey"]);
             }
-            // Save controller state to session variable. 
-            // sessionStorage.setObject(controllerState.projectId, controllerState);
+
+            // Save controller state to session variable. TODO
+            // sessionStorage.setObject(appState.projectId, appState);
         });
         $.when(fetchProject).done(function() {
             // Launch application.
-            appController = new AppController(stimulusList, controllerState);
+            appController = new AppController(stimulusList, appState);
         });
-    });
+    }
+    
     </script>
 </body>
 

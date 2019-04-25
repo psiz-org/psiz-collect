@@ -16,7 +16,7 @@
 // TODO add optional comments input at end of experiment (need to add table to database as well)
 // TODO variable and function names as camel case
 // TODO session storage
-// sessionStorage.setObject(controllerState.projectId, controllerState);
+// sessionStorage.setObject(appState.projectId, appState);
 
 class Stopwatch {
 
@@ -46,7 +46,7 @@ class Stopwatch {
   
 }
   
-var AppController = function(stimulusList, controllerState) {
+var AppController = function(stimulusList, appState) {
 
     // Constants.
     var CHOICE_TILES = ['choice-tile-A', 'choice-tile-B', 'choice-tile-C', 'choice-tile-D', 'choice-tile-E', 'choice-tile-F', 'choice-tile-G', 'choice-tile-H'];
@@ -54,7 +54,7 @@ var AppController = function(stimulusList, controllerState) {
     var RANKING_TEXT = ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th'];
 
     // Variables.
-    var controllerState = controllerState;
+    var appState = appState;
     var selectionState;
     var loaderArray;
     var startTimeMs;
@@ -62,22 +62,19 @@ var AppController = function(stimulusList, controllerState) {
     let stopwatch = new Stopwatch();
 
     // Start preloading images.
-    loaderArray = preloadStimuli(controllerState.docket)
+    loaderArray = preloadStimuli(appState.docket)
 
     // Startup settings.
-    $('.total-number-screens').text(controllerState.docket.length);
+    $('.total-number-screens').text(appState.docket.length);
     $('.grid__row-placeholder').show()
     $('#query-tile').show()
     $('#choice-tile-A').show()
     $('#choice-tile-B').show()
 
-    // Check specifications.
-    //  check nReference <= nTile
-    //  check nStimuli > nTile
-    //  check nSelect < nChoice
+    // Check specifications. TODO
     //  check current trialIdx is not larger than docket
-    
-    // $('.survey').show();
+
+    // Login.
 
     // Obtain consent.
     // $('.consent').show(); TODO
@@ -86,16 +83,17 @@ var AppController = function(stimulusList, controllerState) {
     $('.instructions').show();
 
     // Show survey. TODO
+    // $('.survey').show();
 
     function preloadStimuli(docket) {
         // Create list of all image IDs in order of appearance
         var idxList = [];
-        for (var iTrial = 0; iTrial < controllerState.docket.length; iTrial++) {
+        for (var iTrial = 0; iTrial < appState.docket.length; iTrial++) {
             idxList = idxList.concat(
-                [controllerState.docket[iTrial].query]
+                [appState.docket[iTrial].query]
             );
             idxList = idxList.concat(
-                controllerState.docket[iTrial].references
+                appState.docket[iTrial].references
             );
         }
 
@@ -194,26 +192,26 @@ var AppController = function(stimulusList, controllerState) {
         return deferred.promise();
     }
 
-    function next(controllerState) {
-        if (controllerState.trialIdx >= controllerState.docket.length) {
+    function next(appState) {
+        if (appState.trialIdx >= appState.docket.length) {
             // Experimet done: update status. TODO
             // postAssignmentUpdate();
             // Show debriefing
             // $('.overlay_content_debriefing').show('fast');
             // TODO clear session variables
         } else {
-            startTrial(controllerState);
+            startTrial(appState);
         }
     }
 
-    function startTrial(controllerState) {
-        var trial = controllerState.docket[controllerState.trialIdx];
+    function startTrial(appState) {
+        var trial = appState.docket[appState.trialIdx];
         var loaders = getTrialLoaders(trial, loaderArray);
 
         uiResetTrial(trial);
 
         // Update progress indicator.
-        $('#grid__progress-counter').text(controllerState.trialIdx);
+        $('#grid__progress-counter').text(appState.trialIdx);
         // Set instructions.
         if (trial.nSelect == 1) {
             $(".text-n-select").text("")
@@ -528,12 +526,12 @@ var AppController = function(stimulusList, controllerState) {
 
     function postObs(){
         var dataToPost = {
-            projectId: controllerState.projectId,
+            projectId: appState.projectId,
             assignmentId: cfg.dbAssignmentId,
-            obs: controllerState.docket
+            obs: appState.docket
         };
 
-        var postData = $.post( "../psiz-collect/php/postObs.php", controllerState.docket, function(result) {
+        var postData = $.post( "../psiz-collect/php/postObs.php", appState.docket, function(result) {
         });
     }
 
@@ -606,7 +604,7 @@ var AppController = function(stimulusList, controllerState) {
         $(".tile__audio").prop('muted', false);
         $(".grid").show();
         // Start next trial.
-        next(controllerState);        
+        next(appState);        
     })
 
     $("#grid__info-button").click( function() {
@@ -696,7 +694,7 @@ var AppController = function(stimulusList, controllerState) {
             totalTimeMs = stopwatch.total();
 
             // Re-arrange trial docket into observation format.
-            var trial = controllerState.docket[controllerState.trialIdx];
+            var trial = appState.docket[appState.trialIdx];
             // console.log("references: " + trial.references)
             // console.log("selectionState: " + selectionState.isTileSelected)
             var obsIdx = []
@@ -710,14 +708,14 @@ var AppController = function(stimulusList, controllerState) {
                 }
             }
             trial.references = obsIdx
-            // console.log("references: " + controllerState.docket[controllerState.trialIdx].references)
+            // console.log("references: " + appState.docket[appState.trialIdx].references)
             trial.rt_ms = totalTimeMs
             // trial.isCatchTrialCorrect = gradeCatchTrial(trial) TODO
 
-            controllerState.trialIdx += 1;
+            appState.trialIdx += 1;
             // Now that trial is finished, update sessionStorage to save progress.
-            // sessionStorage.setObject(controllerState.projectId, controllerState); TODO
-            next(controllerState);
+            // sessionStorage.setObject(appState.projectId, appState); TODO
+            next(appState);
         }
     });
 

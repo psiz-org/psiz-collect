@@ -1,6 +1,10 @@
 <?php
 /**
  * Initialize assignment and return relevant assignment details.
+ * 
+ * The current appState is passed in and based on it's values,
+ * is appropriately completed. The major transfer overhead is the
+ * docket, which is relatively marginal.
  */
 
 /**
@@ -225,10 +229,10 @@ function selectProtocol($dirProject, $protocolHistory) {
 // NOTE: You must change the filepath to reflect your server setup.
 $mysqlCredentialsPath = '/home/bdroads/.mysql/credentials';
 
-$controllerState = json_decode($_POST[controllerState], true);
+$appState = json_decode($_POST[appState], true);
 
 $dirCollect = getenv('DIR_COLLECT');
-$dirProject = joinPaths($dirCollect, $controllerState["projectId"]);
+$dirProject = joinPaths($dirCollect, "projects", $appState["projectId"]);
 
 $stimulusList = retrieveStimulusList($dirProject);
 $nStimuli = sizeof($stimulusList);
@@ -244,35 +248,33 @@ if (mysqli_connect_errno()) {
     exit();
 }
 
-if (! isset($controllerState["protocolId"])) {
-    $protocolHistory = retrieveProtocolHistory($link, $controllerState["projectId"]);
-    $controllerState["protocolId"] = selectProtocol($dirProject, $protocolHistory);
+if (! isset($appState["protocolId"])) {
+    $protocolHistory = retrieveProtocolHistory($link, $appState["projectId"]);
+    $appState["protocolId"] = selectProtocol($dirProject, $protocolHistory);
 
-    // Create new assignment entry in database.
-    $workerId = $_POST[workerId];
-    $amtAssignmentId = $_POST[amtAssignmentId];
-    $amtHitId = $_POST[amtHitId];
-    $browser = $_POST[browser];
-    $platform = $_POST[platform];
+    // Create a new assignment entry in database.
     $query = "INSERT INTO assignment (worker_id, project_id, protocol_id, amt_assignment_id, amt_hit_id, browser, platform) VALUES (?, ?, ?, ?, ?, ?, ?)";
     $stmt = mysqli_prepare($link, $query);
     mysqli_stmt_bind_param(
-        $stmt, 'sssssss', $workerId, $controllerState["projectId"],
-        $controllerState["protocolId"], $amtAssignmentId, $amtHitId, $browser,
-        $platform
+        $stmt, 'sssssss', $appState["workerId"], $appState["projectId"],
+        $appState["protocolId"], $appState["amtAssignmentId"],
+        $appState["amtHitId"], $appState["browser"], $appState["platform"]
     );
     mysqli_stmt_execute($stmt);
-    $controllerState["assignmentId"] = mysqli_insert_id($link);
+    $appState["assignmentId"] = mysqli_insert_id($link);
     mysqli_stmt_close($stmt);
+
+    $appState["seenConsent"] = false;
+    $appState["seenInstructions"] = false;
 }
 
-$fpProtocol = joinPaths($dirProject, $controllerState["protocolId"]);
+$fpProtocol = joinPaths($dirProject, $appState["protocolId"]);
 $json_str = file_get_contents($fpProtocol);
 $json_obj = json_decode($json_str, true);
 
-if (! isset($controllerState["docket"])) {
-    $controllerState["docket"] = prepareDocket($json_obj, $nStimuli);
-    $controllerState["trialIdx"] = 0;
+if (! isset($appState["docket"])) {
+    $appState["docket"] = prepareDocket($json_obj, $nStimuli);
+    $appState["trialIdx"] = 0;
 }
 
 // Set consent.
@@ -283,7 +285,7 @@ if (isset($json_obj["consent"])) {
         $consentFile = fopen($fpConsent, "r") or die("Unable to open specified consent file.");
         $consent = fread($consentFile, filesize($fpConsent));
         fclose($consentFile);
-        $controllerState["isConsent"] = true;
+        $appState["isConsent"] = true;
     }   
 }
 
@@ -306,12 +308,12 @@ if (isset($json_obj["survey"])) {
         $surveyFile = fopen($fpSurvey, "r") or die("Unable to open specified survey file.");
         $survey = fread($surveyFile, filesize($fpSurvey));
         fclose($surveyFile);
-        $controllerState["isSurvey"] = true;
+        $appState["isSurvey"] = true;
     }   
 }
 
 $projectConfig = array(
-    "stimulusList"=>$stimulusList, "controllerState"=>$controllerState,
+    "stimulusList"=>$stimulusList, "appState"=>$appState,
     "instructions"=>$instructions, "consent"=>$consent, "survey"=>$survey,
 );
 echo json_encode($projectConfig);

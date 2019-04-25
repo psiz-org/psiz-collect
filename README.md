@@ -22,6 +22,7 @@ PsiZ Collect is intended to be a template for creating a web-based application f
 ```
 DIR_COLLECT
 +-- \php
++-- \projects
 +-- \static
 +-- \templates
 +-- collect.php
@@ -45,11 +46,11 @@ $dirCollect = joinPaths($_SERVER['DOCUMENT_ROOT'], $theRestOfYourPath);
 
 ### 1.3 Set up re-write rules.
 <!-- TODO -->
+Modify the .htaccess file at the root of the host website.
 ```
 RewriteEngine on
 RewriteRule ^collect/([A-Za-z0-9]+)/$ collect/psiz-collect/index.php?projectId=$1 [QSA]
 ```
-
 
 ### 1.4 Set up MySQL database.
 <!-- TODO -->
@@ -73,7 +74,7 @@ status_code
 <!-- TODO test script Success!, Hello world!, much wow, wubba lubba dub dub, It's working!-->
 
 ## 2. Create a new collection project.
-<!-- TODO describe creation of directory, descfribe when should you create a new project, a unique project id, no spaces -->
+<!-- TODO describe creation of directory inside "projects", descfribe when should you create a new project, a unique project id, no spaces -->
 
 For each project, you must supply the following items:
 1. A set of stimuli.
@@ -135,6 +136,8 @@ A JSON file specifying an experiment protocol. There are two types of protocols:
 * no default protocol since money may be on the line
 * Each trial can have a different configuration (number of references, number of choices, ranked) by using a deterministic protocol.
 * Protocols will need to be created by the user but can be checked for validity using the provided python script `check_protocol.py`.
+* specifying breaks TODO
+* make clear that if no consent is provided in project directory, there is no default, i.e., assumes that it has been obtained some other way
 
 For clarity to the participant, it is probably best not to mix unranked and ranked trials within a session.
 

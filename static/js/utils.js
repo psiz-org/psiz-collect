@@ -99,7 +99,7 @@ function Multiply_Array(someArray, scalar) {
 }
 
 // see http://www.javascripter.net/faq/browsern.htm
-function userSystemInfo() {
+function clientInfo() {
 
     var nVer = navigator.appVersion;
     var nAgt = navigator.userAgent;
@@ -167,7 +167,7 @@ function userSystemInfo() {
     userPlatform = navigator.platform;
     browserLanguage = navigator.language;
 
-    return {browserName: browserName, userPlatform: userPlatform, browserLanguage: browserLanguage};
+    return {browser: browserName, platform: userPlatform, language: browserLanguage};
 }
 
 function Console_Debug(debugOn, msg) {
