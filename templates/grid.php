@@ -1,7 +1,7 @@
-<div class="container grid">
-    <div class="row gutter-20">
+<div class="grid">
+    <!-- <div class="row gutter-20">
         <div class="grid__row-placeholder"></div>
-    </div>
+    </div> -->
     <div class="row gutter-20">
         <div class="col-xs-1 col-md-1"></div>
         <div class="col-xs-10 col-md-10">
@@ -84,9 +84,6 @@
             </div>
         </div>
         <div class="col-xs-4 col-md-4">
-            <div class='grid__screen-progress'>
-                Completed: <span id='grid__progress-counter'>0</span> / <span class='total-number-screens'>50</span>
-            </div>
         </div>
     </div>
 </div>

@@ -45,37 +45,22 @@
         </div>
     </div>
 
-    <div class="container consent">
-        <div class="row">
-            <div class="col-xs-1 col-md-2"></div>
-            <div class="consent__content col-xs-10 col-md-8">
-                <?php require "templates/default-consent.html"; ?>
+    <div class="container app">
+        <div class='docket-progress'>
+            Progress: <span id='docket-progress__counter'>0</span> / <span class='docket-progress__total'>50</span>
+            <div class='docket-progress__groove'>
+                <div class='docket-progress__bar'>
+                </div>
             </div>
-            <div class="col-xs-1 col-md-2"></div>
         </div>
-        <div class="row">
-            <div class="col-xs-3 col-md-5"></div>
-            <div class="col-xs-3 col-md-2">
-                <div id='consent-button' class='custom-button custom-button--enabled'>I Agree</div>
-            </div>
-            <div class="col-xs-3 col-md-5"></div>
+        
+        <div class="message">
+            <div class="message__content"></div>
         </div>
-    </div>
 
-    <div class="container instructions">
-        <div class="row">
-            <div class="col-xs-1 col-md-3"></div>
-            <div class="instructions__content col-xs-10 col-md-6">
-                <?php require "templates/default-instructions.php"; ?>
-            </div>
-            <div class="col-xs-1 col-md-3"></div>
-        </div>
-        <div class="row">
-            <div class="col-xs-3 col-md-5"></div>
-            <div class="col-xs-3 col-md-2">
-                <div id='instructions-button' class='custom-button custom-button--enabled'>OK</div>
-            </div>
-            <div class="col-xs-3 col-md-5"></div>
+        <?php require "templates/grid.php"; ?>
+
+        <?php require "templates/final.php"; ?>
         </div>
     </div>
 
@@ -92,23 +77,6 @@
         </div>
     </div>
 
-    <div class="container survey">
-        <div class="row">
-            <div class="col-xs-1 col-md-2"></div>
-            <div class="survey__content col-xs-10 col-md-8"></div>
-            <div class="col-xs-1 col-md-2"></div>
-        </div>
-        <div class="row">
-            <div class="col-xs-3 col-md-5"></div>
-            <div class="col-xs-3 col-md-2">
-                <div id='survey-button' class='custom-button custom-button--enabled'>Submit</div>
-            </div>
-            <div class="col-xs-3 col-md-5"></div>
-        </div>
-    </div>
-
-    <?php require "templates/grid.php"; ?>
-
     <script src="../psiz-collect/static/js/AppController.js"></script>
     <script src="../psiz-collect/static/js/utils.js"></script>
     <script type="text/javascript">
@@ -121,16 +89,21 @@
         appState = sessionStorage.getObject(queryVariables["projectId"]);
     } else {
         if (queryVariables["assignmentId"] == null) {
+            // Set AMT variables to empty strings.
             queryVariables["assignmentId"] = "";
             queryVariables["hitId"] = "";
+            queryVariables["turkSubmitTo"] = "";
         }
         appState = {
             projectId: queryVariables["projectId"],
             workerId: queryVariables['workerId'],
             amtAssignmentId: queryVariables["assignmentId"],
             amtHitId: queryVariables["hitId"],
+            turkSubmitTo: queryVariables["turkSubmitTo"],
             browser: client["browser"],
             platform: client["platform"],
+            postStatus: "",
+            voucherCode: ""
         };
     }
     
@@ -154,7 +127,9 @@
     });
 
     $("#login__input").on('keypress',function(e) {
-        if(e.which == 13) {
+        if (!e) var e = window.event;
+
+        if(e.which == 13 || e.keyCode === 13) {
             $(".login").hide(0);
             var workerId = $("#login__input").val();
             if (workerId == "") {
@@ -169,32 +144,19 @@
         var dataToPost = {
             appState: JSON.stringify(appState)
         }
-        var fetchProject = $.post( "../psiz-collect/php/initialize.php", dataToPost, function(result) {
+        var fetchProject = $.post("../psiz-collect/php/initialize.php", dataToPost, function(result) {
             var projectConfig = JSON.parse(result);
             stimulusList = projectConfig["stimulusList"];
             appState = projectConfig["appState"];
-
-            // Set any custom content.
-            if (projectConfig["consent"] != null) {
-                $( ".consent__content" ).html(projectConfig["consent"]);
-            }
-            if (projectConfig["instructions"] != null) {
-                $( ".instructions__content" ).html(projectConfig["instructions"]);
-            }
-            if (projectConfig["survey"] != null) {
-                $( ".survey__content" ).html(projectConfig["survey"]);
-            }
-
-            // Save controller state to session variable. TODO
-            // sessionStorage.setObject(appState.projectId, appState);
+            // Save application state to session variable.
+            sessionStorage.setObject(appState.projectId, appState);
         });
         $.when(fetchProject).done(function() {
             // Launch application.
+            $(".app").show();
             appController = new AppController(stimulusList, appState);
         });
     }
-    
-    </script>
+    </script>    
 </body>
-
 </html>

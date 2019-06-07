@@ -11,41 +11,47 @@
 *    non-existent stimuli or improper dockets.
 */
 
-// TODO erase session variable when assignment is completed
-// TODO make sure new assignment isn't created on page reload
 // TODO add optional comments input at end of experiment (need to add table to database as well)
-// TODO variable and function names as camel case
-// TODO session storage
-// sessionStorage.setObject(appState.projectId, appState);
 
 class Stopwatch {
 
     constructor() {
       this.totalMs = 0;
       this.startMs = 0;
+      this.running = false;
     }
   
     start() {
         this.startMs = new Date().getTime();
+        this.running = true;
     }
     
     stop() {
         var stopMs = new Date().getTime();
         this.totalMs = this.totalMs + (stopMs - this.startMs);
+        this.running = false;
         // alert("Total: " + this.totalMs);
     }
 
-    total() {
-        return this.totalMs;
+    read() {
+        var elapsedMs = 0;
+        if (this.running) {
+            var nowMs = new Date().getTime();
+            elapsedMs = this.totalMs + (nowMs - this.startMs);
+        } else {
+            elapsedMs = this.totalMs;
+        }
+        return elapsedMs
     }
 
     reset() {
         this.totalMs = 0;
         this.startMs = 0;
+        this.running = false;
     }
   
 }
-  
+
 var AppController = function(stimulusList, appState) {
 
     // Constants.
@@ -57,44 +63,36 @@ var AppController = function(stimulusList, appState) {
     var appState = appState;
     var selectionState;
     var loaderArray;
-    var startTimeMs;
-    var totalTimeMs;
+    var startTimestamp = "";
     let stopwatch = new Stopwatch();
 
     // Start preloading images.
     loaderArray = preloadStimuli(appState.docket)
 
     // Startup settings.
-    $('.total-number-screens').text(appState.docket.length);
-    $('.grid__row-placeholder').show()
-    $('#query-tile').show()
-    $('#choice-tile-A').show()
-    $('#choice-tile-B').show()
+    $('.docket-progress__total').text(appState.docket.length);
+    uiUpdateDocketProgress();
+    $('.grid__row-placeholder').show();
+    $('#query-tile').show();
+    $('#choice-tile-A').show();
+    $('#choice-tile-B').show();
+    uiResetGrid();
 
-    // Check specifications. TODO
-    //  check current trialIdx is not larger than docket
-
-    // Login.
-
-    // Obtain consent.
-    // $('.consent').show(); TODO
-
-    // Show instructions. TODO
-    $('.instructions').show();
-
-    // Show survey. TODO
-    // $('.survey').show();
+    // Start next part of docket.
+    next(appState);
 
     function preloadStimuli(docket) {
         // Create list of all image IDs in order of appearance
         var idxList = [];
-        for (var iTrial = 0; iTrial < appState.docket.length; iTrial++) {
-            idxList = idxList.concat(
-                [appState.docket[iTrial].query]
-            );
-            idxList = idxList.concat(
-                appState.docket[iTrial].references
-            );
+        for (var iPart = 0; iPart < appState.docket.length; iPart++) {
+            if (appState.docket[iPart].content == "trial") {
+                idxList = idxList.concat(
+                    [appState.docket[iPart].query]
+                );
+                idxList = idxList.concat(
+                    appState.docket[iPart].references
+                );
+            }
         }
 
         // Filter down to unique IDs while preserving order.
@@ -184,7 +182,7 @@ var AppController = function(stimulusList, appState) {
         // see: http://stackoverflow.com/questions/8645143/wait-for-image-to-be-loaded-before-going-on
         var deferred = $.Deferred();
         var audio = document.createElement("AUDIO");
-        audio.oncanplay = function() {  // TODO
+        audio.oncanplay = function() {
             deferred.resolve();
         };
         audio.setAttribute("src", fname);
@@ -193,34 +191,39 @@ var AppController = function(stimulusList, appState) {
     }
 
     function next(appState) {
-        if (appState.trialIdx >= appState.docket.length) {
-            // Experimet done: update status. TODO
-            // postAssignmentUpdate();
-            // Show debriefing
-            // $('.overlay_content_debriefing').show('fast');
-            // TODO clear session variables
+        if (appState.docketIdx >= appState.docket.length) {
+            finishSession(appState);
         } else {
-            startTrial(appState);
+            // Session not finished, get next page.
+            var page = appState.docket[appState.docketIdx];
+            switch (page.content) {
+                case "message":
+                    $(".grid").hide(0);
+                    $(".message__content").html(page.html)
+                    $(".message").show(0);
+                    break;
+                case "trial":
+                    $(".message").hide(0);
+                    $(".grid").show(0);
+                    startTrial(appState);
+                    break;
+            }            
         }
     }
 
     function startTrial(appState) {
-        var trial = appState.docket[appState.trialIdx];
+        var trial = appState.docket[appState.docketIdx];
         var loaders = getTrialLoaders(trial, loaderArray);
 
-        uiResetTrial(trial);
+        selectionState = uiResetSelection(trial);
 
-        // Update progress indicator.
-        $('#grid__progress-counter').text(appState.trialIdx);
         // Set instructions.
         if (trial.nSelect == 1) {
             $(".text-n-select").text("")
             $(".text-tile-grammar").text("tile")
-            // $(".grid__prompt-text").text("Select a tile")
         } else {
             $(".text-n-select").text(trial.nSelect)
             $(".text-tile-grammar").text("tiles")
-            // $(".grid__prompt-text").text("Select " + trial.nSelect + " tiles")
             if (trial.isRanked) {
                 $(".is-ranked").show();
             }
@@ -230,14 +233,55 @@ var AppController = function(stimulusList, appState) {
         // Callback when everything has finished loading.
             uiSetStimuli(trial);
             uiShowTiles(trial);
-            startTimeMs = new Date().getTime();
             stopwatch.reset();
             stopwatch.start();
+            startTimestamp = clientTimestamp();
         });
     }
 
-    function uiResetTrial(trial) {
+    function finishSession(appState) {
+        // Session finished.
+        postSession(appState);
+        
+        // Get voucher code.
+        if (appState.amtAssignmentId != "") {
+            $(".voucher").show();
+            if (appState.voucherCode == "") {
+                var dataToPost = {
+                    amtAssignmentId: appState.amtAssignmentId,
+                    amtWorkerId: appState.workerId,
+                    amtHitId: appState.amtHitId,
+                };
+                // Create new voucher entry in database.
+                $.post("../psiz-collect/php/post-voucher.php", dataToPost, function(voucherStatus) {
+                    console.log("voucher status: " + voucherStatus);
+                    if (voucherStatus != "0") {
+                        appState.voucherCode = voucherStatus;
+                        sessionStorage.setObject(appState.projectId, appState);
+                        $("#voucher__code").text(appState.voucherCode);
+                    }
+                }).fail( function (xhr, status, error) {
+                    console.log("Post using post-voucher.php failed.");
+                    console.log(status);
+                    console.log(error);
+                    console.log(xhr.responseText);
+                }); // end post
+            } else {
+                $("#voucher__code").text(appState.voucherCode);
+            }
+        } else {
+            $(".voucher__alt").show();
+        }
+
+        // Show final page.
+        $(".grid").hide(0);
+        $(".message").hide(0);
+        $('.final').show(0);
+    }
+
+    function uiResetGrid() {
         // Reset grid.
+        // $(".grid").hide(0);
         // $("#grid__sound-button").hide(0);
         // Reset tiles.
         $(".tile").hide(0);
@@ -245,33 +289,31 @@ var AppController = function(stimulusList, appState) {
         $(".tile__text").hide(0);
         $(".tile__text").html("");
         $(".tile__img").hide(0);
+        $(".tile__img").removeClass('tile__img--flipped');
         $(".tile__video").hide(0);
         $(".tile__video-source").attr('src', "");
         $(".tile__audio").hide(0);
         $(".tile__audio-source").attr('src', "");
         $(".tile__progress-bar").hide(0);
         $(".tile__progress-value").width("0%");
-    
-        // Reset selection.
-        selectionState = uiResetSelection(trial);
-    }
-
-    function uiResetSelection(trial) {
+        // Reset selections.
         $('.tile--choice').removeClass('tile--choice-selected');
         $('.tile--choice').addClass('tile--choice-unselected')
         $('.tile__banner').hide();
-
+        // Reset submit button.
         $('#grid__submit-button').removeClass('custom-button--enabled');
         $('#grid__submit-button').addClass('custom-button--disabled');
-        $('#grid__submit-button').addClass('unselectable')
-        
-        // TODO is hard-coded N_CHOICE_TILE an issue?
+        $('#grid__submit-button').addClass('unselectable');
+    }
+
+    function uiResetSelection(trial) {
         var selectionState = {
             nChoice: trial.references.length,
             nSelect: trial.nSelect,
             isRanked: trial.isRanked,
             nSelected: 0,
-            isTileSelected: zeros(N_CHOICE_TILE)
+            isTileSelected: zeros(N_CHOICE_TILE),
+            tileRtMs: zeros(N_CHOICE_TILE)
         }
         return selectionState;
     }
@@ -308,26 +350,27 @@ var AppController = function(stimulusList, appState) {
 
     function uiSetStimuli(trial) {
         // Update query tile.
-        uiSetTile("#query-tile", stimulusList[trial.query]);
+        uiSetTile("#query-tile", stimulusList[trial.query], trial.isCatch);
 
         // Update choice tiles.
         var nChoice = trial.references.length;
         for (var iChoiceTileIdx = 0; iChoiceTileIdx < nChoice; iChoiceTileIdx++) {
             uiSetTile(
                 "#" + CHOICE_TILES[iChoiceTileIdx],
-                stimulusList[trial.references[iChoiceTileIdx]]
+                stimulusList[trial.references[iChoiceTileIdx]],
+                false
             );
         }
     }
 
-    function uiSetTile(tileId, fname) {
+    function uiSetTile(tileId, fname, isCatch) {
         var media = mediaType(fname);
         switch (media) {
             case "text":
                 uiSetText(tileId, fname);
                 break;
             case "image":
-                uiSetImage(tileId, fname);
+                uiSetImage(tileId, fname, isCatch);
                 break;
             case "video":
                 uiSetVideo(tileId, fname);
@@ -344,10 +387,13 @@ var AppController = function(stimulusList, appState) {
         txt.show(0)
     }
 
-    function uiSetImage(tileId, fname) {
+    function uiSetImage(tileId, fname, isCatch) {
         var img = $(tileId).find(".tile__img");
         $(img).attr('src', fname);
         $(img).attr('alt', fname);
+        if (isCatch) {
+            $(img).addClass('tile__img--flipped');
+        }
         $(img).show(0);
     }
 
@@ -385,15 +431,18 @@ var AppController = function(stimulusList, appState) {
         uiSetText(tileId, '<i class="fas fa-music"></i>')
     }
 
-    function uiTileSelect(tileId, selectionState) {
+    function uiTileSelect(tileId, selectionState, elapsedMs) {
         var tileIdx = CHOICE_TILES.indexOf(tileId);
         selectionState.nSelected = selectionState.nSelected + 1;
         var order = selectionState.nSelected;
         selectionState.isTileSelected[tileIdx] = order;
+        selectionState.tileRtMs[tileIdx] = elapsedMs;
 
+        // Add selected styling.
         $('#' + tileId).removeClass('tile--choice-unselected');
         $('#' + tileId).addClass('tile--choice-selected');
 
+        // Add selected text.
         var $tileBanner = $("#" + tileId).find(".tile__banner");
         if (selectionState.isRanked) {
             $tileBanner.text(RANKING_TEXT[order-1] + ' Most Similar');
@@ -402,6 +451,7 @@ var AppController = function(stimulusList, appState) {
         }
         $tileBanner.show();
 
+        // Disable choice tiles if enough selected.
         var $choiceTile;
         if (selectionState.nSelected >= selectionState.nSelect) {
             for (var iChoiceTile = 0; iChoiceTile < selectionState.nChoice; iChoiceTile++) {
@@ -416,7 +466,7 @@ var AppController = function(stimulusList, appState) {
         return selectionState;
     }
 
-    function uiTileUnselect(tileId, selectionState) {
+    function uiTileUnselect(tileId, selectionState, elapsedMs) {
         var doReEnableChoices = false;
         if (selectionState.nSelected >= selectionState.nSelect) {
             doReEnableChoices = true;
@@ -426,6 +476,7 @@ var AppController = function(stimulusList, appState) {
         var oldSelectionOrder = selectionState.isTileSelected[tileIdx];
 
         selectionState.isTileSelected[tileIdx] = 0;
+        selectionState.tileRtMs[tileIdx] = 0;
         selectionState.nSelected = selectionState.nSelected - 1;
 
         // Loop over all tiles to move any currently selected tiles up in ranking if they came after unselected tile
@@ -463,149 +514,61 @@ var AppController = function(stimulusList, appState) {
 
     function uiTileToggle(tileId, selectionState) {
         var tileIdx = CHOICE_TILES.indexOf(tileId);
+        var elapsedMs = stopwatch.read();
         if (selectionState.isTileSelected[tileIdx] === 0) {
             if (selectionState.nSelected < selectionState.nSelect) {
-                selectionState = uiTileSelect(tileId, selectionState);
+                selectionState = uiTileSelect(tileId, selectionState, elapsedMs);
             }
         } else {
-            selectionState = uiTileUnselect(tileId, selectionState);
+            selectionState = uiTileUnselect(tileId, selectionState, elapsedMs);
         }
         return selectionState;
     }
 
-    function gradeCatchTrial(trial, selectionState) {
-        var nReference = trial.choices.filename.length;
-        var isCatchTrialCorrect = 0;
-        var queryFilename = basename(trial.query.filename);
-        for (var iReference=0; iReference < nReference; iReference++){
-            if (selectionState.isTileSelected[iReference] != 0) {
-                if (basename(trial.choices.filename[iReference]) === queryFilename) {
-                    isCatchTrialCorrect = 1;
-                }
-            }
-        }
-        return isCatchTrialCorrect;
+    function uiUpdateDocketProgress() {
+        $('#docket-progress__counter').text(appState.docketIdx);
+        var progressValue = (100 / appState.docket.length) * appState.docketIdx;
+        $('.docket-progress__bar').width(progressValue + "%");
     }
 
-    function inferFilenameReferences(trial, selectionState) {
-        var nReference = trial.choices.filename.length;
-        var nSelected = 0;
-
-        // Assemble array of ranked image ids and unselected image ids
-        var rankedImageFilename = [];
-        var unselectedImageFilename = [];
-        for (var iReference=0; iReference < nReference; iReference++){
-            if (selectionState.isTileSelected[iReference] != 0) {
-                var rankedIdx = selectionState.isTileSelected[iReference] - 1; //minus one to account for zero indexing
-                rankedImageFilename[rankedIdx] =  basename( trial.choices.filename[iReference] );
-                nSelected = nSelected + 1;
-            } else {
-                unselectedImageFilename.push( basename( trial.choices.filename[iReference] ));
-            }
-        }
-
-        var referenceList = []
-        // Add selected references
-        for (var iSelection = 0; iSelection < nSelected; iSelection++) {
-            var currentReference = {
-                imageFilename: rankedImageFilename[iSelection],
-                rankOrder: iSelection + 1, // plus 1 for 1 indexing
-            }
-            referenceList.push(currentReference);
-        }
-        // Add unselected references
-        for (var iSelection = 0; iSelection < (nReference - nSelected); iSelection++) {
-            var currentReference = {
-                imageFilename: unselectedImageFilename[iSelection],
-                rankOrder: iSelection + 1 + nSelected, // plus 1 for 1 indexing
-            }
-            referenceList.push(currentReference);
-        }
-        return {referenceList: referenceList, nReference: nReference, nSelected: nSelected};
-    }
-
-    function postObs(){
-        var dataToPost = {
-            projectId: appState.projectId,
-            assignmentId: cfg.dbAssignmentId,
-            obs: appState.docket
-        };
-
-        var postData = $.post( "../psiz-collect/php/postObs.php", appState.docket, function(result) {
-        });
-    }
-
-    function postTrial(queryFilename, nReference, nSelected, isCatchTrial, isCatchTrialCorrect, referenceJson) {
-        if (cfg.doRecord) {
+    function postSession(appState){
+        // Post obs, update status.
+        if (appState.postStatus == ""){
             var dataToPost = {
-                website: cfg.website,
-                assignmentId: cfg.dbAssignmentId,
-                nReference: nReference,
-                nSelected: nSelected,
-                isRanked: cfg.isRankedSelection,
-                queryFilename: queryFilename,
-                startTimeMs: String(startTimeMs),
-                totalTimeMs: String(totalTimeMs),
-                isCatchTrial: isCatchTrial,
-                isCatchTrialCorrect: isCatchTrialCorrect,
-                referenceJson: referenceJson
-            };
-
-            $.post("php/post-display-selection.php", dataToPost, function( data ) {
-                Console_Debug(cfg.debugOn, data);
-            }).fail( function () {
-                Console_Debug(cfg.debugOn, "Failed to create display and/or triplet entries in database.");
+                appState: JSON.stringify(appState)
+            }
+            var postData = $.post( "../psiz-collect/php/postObs.php", dataToPost, function(result) {
+                var returnedMsg = JSON.parse(result);
+                appState.postStatus = 1;
+                sessionStorage.setObject(appState.projectId, appState);
             });
-        } // end if
+        }
     }
 
-    function postAssignmentUpdate() {
-        if (cfg.doRecord) {
-            status = 'completed'
-            var dataToPost = {
-                website: cfg.website,
-                assignmentId: cfg.dbAssignmentId,
-                endHit: String(new Date().getTime()),
-                status: status
-            };
-
-            $.post("php/update-assignment.php", dataToPost, function( data ) {
-                Console_Debug(cfg.debugOn, data);
-            }).fail( function () {
-                Console_Debug(cfg.debugOn, "Failed to update assignment entry in database.");
-            });
-        } // end if
+    function reformatAsObservation(trial, startTimestamp, selectionState) {
+        // Reformat from docket format to observation format.
+        var obsIdx = [];
+        var choiceRtMs = [];
+        for (var iSelection = 1; iSelection <= trial.nSelect; iSelection++) {
+            var idx = selectionState.isTileSelected.indexOf(iSelection)
+            obsIdx.push(trial.references[idx]);
+            choiceRtMs.push(selectionState.tileRtMs[idx]);
+        }
+        for (var iReference = 0; iReference < trial.references.length; iReference++) {
+            if (selectionState.isTileSelected[iReference] == 0) {
+                obsIdx.push(trial.references[iReference]);
+                choiceRtMs.push(selectionState.tileRtMs[iReference]);
+            }
+        }
+        // Add placeholders for unused references.
+        for (var iReference = trial.references.length; iReference < N_CHOICE_TILE; iReference++) {
+            obsIdx.push(-1);
+            choiceRtMs.push(0);
+        }
+        trial.references = obsIdx;
+        trial.startTimestamp = startTimestamp;
+        trial.choiceRtMs = choiceRtMs;
     }
-
-    function postAssignmentWorkerUpdate(workerId) {
-        if (cfg.doRecord) {
-            var dataToPost = {
-                website: cfg.website,
-                assignmentId: cfg.dbAssignmentId,
-                workerId: workerId,
-            };
-
-            $.post("php/update-assignment-worker-id.php", dataToPost, function( data ) {
-                Console_Debug(cfg.debugOn, data);
-            }).fail( function () {
-                Console_Debug(cfg.debugOn, "Failed to update assignment entry in database.");
-            });
-        } // end if
-    }
-
-    $("#consent-button").click( function() {
-        $(".consent").hide();
-        $(".instructions").show();
-    })
-
-    $("#instructions-button").click( function () {
-        $(".instructions").hide();
-        $(".tile__video").prop('muted', false);
-        $(".tile__audio").prop('muted', false);
-        $(".grid").show();
-        // Start next trial.
-        next(appState);        
-    })
 
     $("#grid__info-button").click( function() {
         stopwatch.stop();
@@ -691,71 +654,42 @@ var AppController = function(stimulusList, appState) {
     $("#grid__submit-button").click( function() {
         if ($("#grid__submit-button").hasClass("custom-button--enabled")) {
             stopwatch.stop()
-            totalTimeMs = stopwatch.total();
+            submitTimeMs = stopwatch.read();
 
-            // Re-arrange trial docket into observation format.
-            var trial = appState.docket[appState.trialIdx];
-            // console.log("references: " + trial.references)
-            // console.log("selectionState: " + selectionState.isTileSelected)
-            var obsIdx = []
-            for (var iSelection = 1; iSelection <= trial.nSelect; iSelection++) {
-                var idx = selectionState.isTileSelected.indexOf(iSelection)
-                obsIdx.push(trial.references[idx])
-            }
-            for (var iReference = 0; iReference < trial.references.length; iReference++) {
-                if (selectionState.isTileSelected[iReference] == 0) {
-                    obsIdx.push(trial.references[iReference])
-                }
-            }
-            trial.references = obsIdx
-            // console.log("references: " + appState.docket[appState.trialIdx].references)
-            trial.rt_ms = totalTimeMs
-            // trial.isCatchTrialCorrect = gradeCatchTrial(trial) TODO
+            // console.log("references: " + appState.docket[appState.docketIdx].references)
+            var trial = appState.docket[appState.docketIdx];
+            reformatAsObservation(trial, startTimestamp, selectionState)
+            // console.log("references: " + appState.docket[appState.docketIdx].references)
 
+            appState.docketIdx += 1;
             appState.trialIdx += 1;
+
+            uiResetGrid();
+
+            // Update progress indicator.
+            uiUpdateDocketProgress();
+
             // Now that trial is finished, update sessionStorage to save progress.
-            // sessionStorage.setObject(appState.projectId, appState); TODO
+            sessionStorage.setObject(appState.projectId, appState);
             next(appState);
         }
     });
 
-    // $("#login-button").click( function() {
-    //     $(".overlay_content_login").hide(0);
-    //     $('.overlay_content_intro').show(0);
-    //     // Update assignment database with login name
-    //     loginName = $("#overlay__login-input").val();
-    //     postAssignmentWorkerUpdate(loginName);
-    // });
+    // Note that we're using on instead of click since message_button is 
+    // added dynamically.
+    $('.message__content').on('click', '.message__button', function() {
+        if ($(".message__button").hasClass("custom-button--enabled")) {
+            appState.docketIdx += 1;
+            uiUpdateDocketProgress();
 
-    // $("#overlay__login-input").on('keyup', function(e) {
-    //     if (!e) var e = window.event;
+            // Now that page is finished, update sessionStorage to save progress.
+            sessionStorage.setObject(appState.projectId, appState);
+            next(appState);
+        }
+    });
 
-    //     if (e.which == 13 || e.keyCode === 13) {
-    //         $(".overlay_content_login").hide(0);
-    //         $('.overlay_content_intro').show(0);
-    //         // Update assignment database with login name
-    //         loginName = $("#overlay__login-input").val();
-    //         postAssignmentWorkerUpdate(loginName);
-    //     }
-
-    // 	e.cancelBubble = true;
-    // 	if (e.stopPropagation) e.stopPropagation();
-    // });
-
-    // $('#debrief-button').click( function() {
-    //     if (cfg.mode === 'turkExp') {
-    //         if (window.opener) {
-    //             // Parent window still open
-    //             window.opener.Submit_Hit( cfg.submitUrl );
-    //             window.close();
-    //         } else {
-    //             // Parent window is not opens
-    //             document.getElementById("mturk_form").submit();
-    //         }
-    //     } else {
-    //         $('.overlay_content_debriefing').hide(0);
-    //         $(".overlay_content_done").show(0);
-    //     }
-    // });
-
+    $("#voucher__box").click( function() {
+        $("#voucher__code").focus();
+        $("#voucher__code").select();
+    });
 }

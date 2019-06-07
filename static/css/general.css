@@ -97,6 +97,11 @@ body {
   padding-left: 5px;
 }
 
+.table-striped>tbody>tr:nth-child(odd)>td, 
+.table-striped>tbody>tr:nth-child(odd)>th {
+   background-color: #4d4d4d;
+}
+
 .turk-experiment {
 	display: none;
 }
@@ -105,7 +110,28 @@ body {
     display: none;
 }
 
-.login {
+.app{
+    display: none;
+}
+
+.consent {
+    display: none;
+}
+
+.instructions {
+    display: none;
+}
+
+.survey {
+    display: none;
+}
+
+/*
+================================================================================
+Block: login
+================================================================================
+*/
+.login{
     display: none;
 }
 
@@ -124,18 +150,39 @@ body {
     font-size: x-large;
 }
 
-.consent {
+/*
+================================================================================
+Block: message
+================================================================================
+*/
+.message{
     display: none;
 }
 
-.instructions {
-    display: none;
+.message__scroll {
+    width: auto;
+    height: 310px;
+    overflow: scroll;
+    /* background-color: #e6e6e6; */
 }
 
-.survey {
-    display: none;
+.message__radio-label{
+    margin-left: 5px;
+    margin-right: 10px;
 }
 
+.message__centered{
+    text-align: center;
+}
+
+.message__clock{
+    font-size: 3em;
+    text-align: center;
+}
+
+.message__hide {
+    display: none;
+}
 /*
 ================================================================================
 Block: overlay
@@ -213,7 +260,34 @@ Block: overlay
     display: none;
 }
 
+/*
+================================================================================
+Block: docket-progress
+================================================================================
+*/
+.docket-progress {
+    margin-top: 5px; /* this needs to be in agreement with gutter size to have uniform gutters top-bottom like left-right */
+    margin-bottom: 10px; /* this needs to be in agreement with gutter size to have uniform gutters top-bottom like left-right */
+    text-align: center;
+    font-size: large;
+    color: rgb(134, 134, 134);
+}
 
+.docket-progress__groove {
+    width: 100%;
+    background-color: rgb(134, 134, 134);
+}
+
+.docket-progress__bar {
+    width: 0%;
+    height: 10px;
+    border-radius: 2px;
+    background-color: white;
+    /* For Safari 3.1 to 6.0 */
+    -webkit-transition-duration: .3s;
+    /* Standard syntax */
+    transition-duration: .3s;
+}
 
 /*
 ================================================================================
@@ -229,14 +303,6 @@ Block: grid
 .grid__row-placeholder{
     display: none;
     background-color: transparent;
-}
-
-.grid__screen-progress {
-    padding: 5px; /*so content doesn't touch the edge of the tile*/
-    margin-top: 10px; /* this needs to be in agreement with gutter size to have uniform gutters top-bottom like left-right */
-    margin-bottom: 10px; /* this needs to be in agreement with gutter size to have uniform gutters top-bottom like left-right */
-    text-align: center;
-    font-size: x-large;
 }
 
 .grid__prompt {
@@ -341,10 +407,20 @@ Block: tile
     position: absolute;
     top: 50%;
     left: 50%;
+    -moz-transform: translate(-50%, -50%);
+    -o-transform: translate(-50%, -50%);
+    -webkit-transform: translate(-50%, -50%);
     transform: translate(-50%, -50%);
     max-width: 100%;
     margin-left: auto;
     margin-right: auto;
+}
+
+.tile__img--flipped {
+    -moz-transform: translate(-50%, -50%) scaleX(-1);
+    -o-transform: translate(-50%, -50%) scaleX(-1);
+    -webkit-transform: translate(-50%, -50%) scaleX(-1);
+    transform: translate(-50%, -50%) scaleX(-1);
 }
 
 .tile__video{
@@ -453,6 +529,7 @@ Block: custom-button
     border-color: #404040;
     color: #404040;
 }
+
 .custom-button--disabled:hover {
     cursor: default;
 }
@@ -479,4 +556,53 @@ Block: custom-button
     border-width: thin;
     text-align: center;
     border-color: #00CCFF;
+}
+
+/*
+================================================================================
+Block: voucher
+================================================================================
+*/
+
+.final {
+    display: none;
+    font-size: large;
+}
+
+.voucher {
+    display: none;
+}
+
+.voucher__alt {
+    display: none;
+}
+
+#voucher__label {
+    font-size: 1.3em;
+    color: gray;
+}
+
+#voucher__hint {
+    font-size: 1.3em;
+    color: gray;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+#voucher__box {
+    padding: 10px;
+    background-color: #ccc;
+    border: 3px solid gray;
+    border-radius: 5px;
+    text-align: center;
+}
+
+#voucher__code {
+    font-size: 2em;
+    background-color: inherit;
+    resize: none;
+    width: 100%;
+    text-align: center;
+    border: none;
+    outline: none;
 }

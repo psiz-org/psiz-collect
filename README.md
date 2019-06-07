@@ -62,8 +62,8 @@ Create the MySQL database on the host server. After logging into MySQL, execute:
 
 status_code
     0 - created, not completed, not expired
-    1 - created, completed
-    2 - created, not completed, expired
+    1 - completed
+    2 - not completed, expired
 
 ### 1.5 (optional) Set AWS and AMT credentials
 <!-- TODO -->
@@ -74,57 +74,85 @@ status_code
 <!-- TODO test script Success!, Hello world!, much wow, wubba lubba dub dub, It's working!-->
 
 ## 2. Create a new collection project.
-<!-- TODO describe creation of directory inside "projects", descfribe when should you create a new project, a unique project id, no spaces -->
+To create a new project, start by creating a new project directory inside the `projects` directory. The new project directory should be given a unique name with no whitespace.
 
-For each project, you must supply the following items:
+Once you have created a new project directory, you must supply the following items:
 1. A set of stimuli.
 2. One or more collection protocols.
-3. (optional) custom instructions
-4. (optional) consent form
-5. (optional) survey
+3. (optional) A consent form.
+4. (optional) Custom experiment instructions.
+5. (optional) A survey.
+
+You should consider creating a new project when you would like to infer an embedding for a new, distinct set of stimuli. If you are looking to integrate new stimuli with an existing set of stimuli, you may want to consider expanding the stimuli list of an existing project.
+
+A minimal project will contain a file named `stimuli.txt` and one json file specifying the collection protocol.
+
+<!-- `stimuli.txt` and protocols in directory, actual files can be placed anywhere on the server -->
 
 ### 2.1 Stimuli
 The stimuli are the media that you will ask participants to judge. Raw text, images, audio and video can be used.
 
-Supported file formats:
+The following file formats are supported:
  * images: 'png', 'jpg'
  * audio: 'mp3', 'wav', 'ogg'
  * video: 'mp4', 'webm', 'ogv' <!-- TODO verify ogv actually works-->
 
 NOTE: It is assumed that .ogv indicates a video file while .ogg indicates an audio file (as per the current recommendation by the developer).
 
-<!-- TODO Any stimuli that you wish to be judged should be listed in a file called `stimuli.txt` ...  -->
-<!-- `stimuli.txt` and protocols in directory, actual files can be placed anywhere on the server -->
-A file containing the complete filepaths to all stimuli (one stimulus per line). The application will assume:
+Any stimuli that will be used need to be listed in a file named `stimuli.txt` which should then be placed in the project directory. The `stimuli.txt` file must contain the complete filepaths to all stimuli (one stimulus per line). The application will assume:
 1. That each line points to a unique stimulus.
 2. Stimuli filenames are assumed to be unique (i.e., the last part of the filepath).
-    * When behavior is logged, only the filenames will be saved to the database (not the full filepath).
-3. No other stimuli should be used other than what is on the list.
+3. No other stimuli will be used other than what is on the list.
 4. All stimulus filepaths end with an appropriate file extension.
     * Filepaths without file extensions will be treated as raw text.
 
-If you are looking for a quick way to create this file from a directory of stimuli, one option is to use the GNU or BSD `find` command. For example, the following command finds all files with .jpg and .png file extensions within the `path/to/dataset` directory:
+By requiring filepaths, you can create projects that source stimuli from many different locations on your server.
+
+If you are looking for a method to help create this file for an existing directory of stimuli, one option is to use the GNU or BSD `find` command. For example, the following command finds all files with .jpg and .png file extensions within the `path/to/dataset` directory:
 
 ```
 find path/to/dataset -type f -iname "*.jpg" -o -iname "*.png" > stimuli.txt
 ```
 
-Note it is important that the order of the stimuli in stimuli.txt file not change once you have started collecting data. Instead of storing filenames, only the indices are stored. It's fine to add additional lines for new stimuli, but do not alter existing lines.
+It is critically important that the order of the stimuli in stimuli.txt file not change once you have started collecting data. Instead of storing filenames, only the indices are stored. It's fine to add additional lines for new stimuli, but do not alter existing lines.
 
 ### 2.2 Collection Protocol(s)
-A JSON file specifying an experiment protocol. There are two types of protocols: *stochastic* and *deterministic*. A stochastic protocol requires the following fields:
-* "generator": "stochastic",
-* "pages": array,
-* "docket": object
+An experiment protocol is a JSON file that specifies how to generate a docket. A docket is a sequence of pages to show a participant. Most of these pages will be trials, but can also be instructions, consent forms or surveys. To provide sufficient flexibility, dockets can be specified in a number of ways.
 
-* "nTrial": int,
-* "nCatch": int,
-* "nReference": int,
-* "nSelect": int,
-* "isRanked": bool
+The most low-level docket component is a *trial*. A trial requires the following information:
+* query: int,
+* references: array,
+* nSelect: int,
+* isRanked: bool
+* isCatch: bool
+By using trials, you can specify exactly what you would like participants to see.
 
-    shuffle: shuffle order of trials
-        shuffle (should this always occur? no, because of spacing for catch trials
+The next level of specificity is a *trialSpec*, which requires the following information:
+* nReference: int,
+* nSelect: int,
+* isRanked: bool
+* isCatch: bool
+By using a trialSpec, you can indicate the trial configuration but allow the actual stimuli to be randomly selected.
+
+If you would like a block of randomly selected trials, you can use a *blockSpec*. A blockSpec requires the following information:
+* nTrial: int
+* nReference: int,
+* nSelect: int,
+* isRanked: bool
+* (optional) nCatch: int
+
+<!-- TODO examples, breaks -->
+Breaks can be added by interleaving a messages between blockSpec's
+
+content: trial | trialSpec | blockSpec | message
+
+message
+    html requires field "fname" with appropriate path
+can have multiple blockSpec
+
+
+shuffle: shuffle order of trials
+    shuffle (should this always occur? no, because of spacing for catch trials
 * Stimuli are reference by their index of occurence in `stimuli.txt`. The index is assumed to start at 0 and go to N-1 where N indicates the total number of stimuli listed in `stimuli.txt`.
 * protocol names MUST follow the format `protocol*.json` in order to be detected. The `*` character indicates the typical wildcard format.
 * protocols no longer in use, can be removed from the EXPERIMENT_DIR. Doing so may
@@ -141,6 +169,12 @@ A JSON file specifying an experiment protocol. There are two types of protocols:
 
 For clarity to the participant, it is probably best not to mix unranked and ranked trials within a session.
 
+
+### 2.3 Consent Form
+
+### 2.4 Experiment Instructions
+
+### 2.5 Survey
 
 ## Additional Details
 

@@ -1,11 +1,54 @@
 <?php
 /**
- * Initialize assignment and return relevant assignment details.
+ * Initialize assignment and return relevant information.
  * 
  * The current appState is passed in and based on it's values,
  * is appropriately completed. The major transfer overhead is the
  * docket, which is relatively marginal.
  */
+
+/**
+ * Prepare docket from protocol.
+ * @param str $dirProject  The project directory filepath.
+ * @param str $json_obj  The protocol JSON object.
+ * @param int $nStimuli  The number of stimuli available.
+ * @return array
+ */
+function prepareDocket($dirProject, $docketSpec, $nStimuli) {
+    $stimuliList = range(0, $nStimuli - 1);
+
+    $docket = [];
+    $nPage = count($docketSpec);
+    for ($iPage = 0; $iPage < $nPage; $iPage++) {
+        $page = $docketSpec[$iPage];
+        switch ($page["content"]) {
+            case "trial":
+                $docket[] = $page;
+                break;
+            case "trialSpec":
+                $docket[] = randomTrial(
+                    $stimuliList, $page["nReference"], $page["nSelect"],
+                    $page["isRanked"], $page["isCatch"]
+                );
+                break;
+            case "blockSpec":
+                $trialBlock = randomBlock($nStimuli, $page);
+                $docket = array_merge($docket, $trialBlock);
+                break;
+            case "message":
+                $fp = joinPaths($dirProject, $page["fname"]);
+                if (file_exists($fp)) {
+                    $file = fopen($fp, "r") or die("Unable to open specified file.");
+                    $html = fread($file, filesize($fp));
+                    fclose($file);
+                }
+                $page["html"] = $html;
+                $docket[] = $page;
+                break;
+        }
+    }
+    return $docket;
+}
 
 /**
  * Creates a random trial.
@@ -26,7 +69,10 @@ function randomTrial($stimuliList, $nReference, $nSelect, $isRanked, $isCatch) {
         $sameIdx = rand(0, $nReference - 1);
         $idxReference[$sameIdx] = $idxQuery;
     }
-    $trial = array("query"=>$idxQuery, "references"=>$idxReference, "nSelect"=>$nSelect, "isRanked"=>$isRanked, "isCatch"=>$isCatch);
+    $trial = array(
+        "content"=>"trial", "query"=>$idxQuery, "references"=>$idxReference,
+        "nSelect"=>$nSelect, "isRanked"=>$isRanked, "isCatch"=>$isCatch
+    );
     return $trial;
 }
 
@@ -57,11 +103,13 @@ function allocateCatchTrial($nTrial, $nCatch) {
 /**
  * Randomly shuffle the trial docket.
  *
+ * $docket = shuffleDocket($docket);
+ * 
  * @param object $docket  A trial docket.
  * @return object
  */
 function shuffleDocket($docket) {
-    $nTrial = sizeof($docket);
+    $nTrial = count($docket);
         $trialIdx = range(0, $nTrial - 1);
         shuffle($trialIdx);
 
@@ -74,50 +122,32 @@ function shuffleDocket($docket) {
 }
 
 /**
- * Create a random docket.
+ * Create a random block of trials.
  *
  * @param integer $nStimuli  The total number of stimuli
- * @param object $docketSpec  A docket specification.
+ * @param object $blockSpec  A block specification.
  * @return array
  */
-function randomDocket($nStimuli, $docketSpec) {
+function randomBlock($nStimuli, $blockSpec) {
     $stimuliList = range(0, $nStimuli - 1);
 
-    $nTrial = $docketSpec["nTrial"];
-    $nCatch = $docketSpec["nCatch"];
-    $nReference = $docketSpec["nReference"];
-    $nSelect = $docketSpec["nSelect"];
-    $isRanked = $docketSpec["isRanked"];
+    $nTrial = $blockSpec["nTrial"];
+    $nCatch = $blockSpec["nCatch"];
+    $nReference = $blockSpec["nReference"];
+    $nSelect = $blockSpec["nSelect"];
+    $isRanked = $blockSpec["isRanked"];
      
     $catchTrialList = allocateCatchTrial($nTrial, $nCatch);
 
-    $docket = [];
+    $trialBlock = [];
     for ($iTrial = 0; $iTrial < $nTrial; $iTrial++) {
         $isCatch = $catchTrialList[$iTrial];
         $trial = randomTrial(
             $stimuliList, $nReference, $nSelect, $isRanked, $isCatch
         );
-        $docket[] = $trial;
+        $trialBlock[] = $trial;
     }
-    return $docket;
-}
-
-/**
- * Join paths in a manner similar to python os.path.join(*).
- *
- * See: https://stackoverflow.com/a/1557529
- * 
- * @param array $arg  An array of strings.
- * @return str
- */
-function joinPaths() {
-    $paths = array();
-
-    foreach (func_get_args() as $arg) {
-        if ($arg !== '') { $paths[] = $arg; }
-    }
-
-    return preg_replace('#/+#','/',join('/', $paths));
+    return $trialBlock;
 }
 
 /**
@@ -134,33 +164,11 @@ function retrieveStimulusList($dirProject) {
         while (($line = fgets($handle)) !== false) {
             // Process the line.
             $line = str_replace(PHP_EOL, '', $line);
-            $stimulusList[] = $line;	
+            $stimulusList[] = $line;
         }
         fclose($handle);
     }
     return $stimulusList;
-}
-
-/**
- * Prepare docket from protocol.
- * @param str $json_obj  The protocol JSON object.
- * @param int $nStimuli  The number of stimuli available.
- * @return array
- */
-function prepareDocket($json_obj, $nStimuli) {
-    $gen_type = $json_obj["generator"];
-    if ($gen_type == "deterministic") {
-        // Use provided docket.
-        $docket = $json_obj["docket"];
-        if ($json_obj["shuffleTrials"]) {
-            $docket = shuffleDocket($docket);
-        }
-    } else {
-        // Generate a random docket.
-        $docketSpec = $json_obj["docketSpec"];
-        $docket = randomDocket($nStimuli, $docketSpec);
-    }
-    return $docket;
 }
 
 /**
@@ -197,7 +205,7 @@ function retrieveProtocolHistory($link, $projectId){
  */
 function selectProtocol($dirProject, $protocolHistory) {
     $protocolList = glob($dirProject.'/protocol*.json');
-    $nProtocol = sizeof($protocolList);
+    $nProtocol = count($protocolList);
     if ($nProtocol == 0) {
         // Issue error. TODO
     } else {
@@ -220,25 +228,21 @@ function selectProtocol($dirProject, $protocolHistory) {
             }
         }
         $minOptions = array_keys($protocolFrequency, min($protocolFrequency));
-        $randIdx = random_int(0, sizeof($minOptions) - 1);
+        $randIdx = random_int(0, count($minOptions) - 1);
         $protocolId = $minOptions[$randIdx];
     }
     return $protocolId;
 }
 
-// NOTE: You must change the filepath to reflect your server setup.
-$mysqlCredentialsPath = '/home/bdroads/.mysql/credentials';
+$dirCollect = getenv('DIR_COLLECT');
+require $dirCollect."/php/utils.php";
 
 $appState = json_decode($_POST[appState], true);
 
-$dirCollect = getenv('DIR_COLLECT');
 $dirProject = joinPaths($dirCollect, "projects", $appState["projectId"]);
 
 $stimulusList = retrieveStimulusList($dirProject);
-$nStimuli = sizeof($stimulusList);
-
-// Parse MySQL configuration.
-$config = parse_ini_file($mysqlCredentialsPath, true);
+$nStimuli = count($stimulusList);
 
 // Connect to database.
 $link = mysqli_connect($config['psiz']['servername'], $config['psiz']['username'], $config['psiz']['password'], $config['psiz']['database']);
@@ -263,9 +267,6 @@ if (! isset($appState["protocolId"])) {
     mysqli_stmt_execute($stmt);
     $appState["assignmentId"] = mysqli_insert_id($link);
     mysqli_stmt_close($stmt);
-
-    $appState["seenConsent"] = false;
-    $appState["seenInstructions"] = false;
 }
 
 $fpProtocol = joinPaths($dirProject, $appState["protocolId"]);
@@ -273,48 +274,13 @@ $json_str = file_get_contents($fpProtocol);
 $json_obj = json_decode($json_str, true);
 
 if (! isset($appState["docket"])) {
-    $appState["docket"] = prepareDocket($json_obj, $nStimuli);
-    $appState["trialIdx"] = 0;
-}
-
-// Set consent.
-$consent = NULL;
-if (isset($json_obj["consent"])) {
-    $fpConsent = joinPaths($dirProject, $json_obj["consent"]);
-    if (file_exists($fpConsent)) {
-        $consentFile = fopen($fpConsent, "r") or die("Unable to open specified consent file.");
-        $consent = fread($consentFile, filesize($fpConsent));
-        fclose($consentFile);
-        $appState["isConsent"] = true;
-    }   
-}
-
-// Set instructions.
-$instructions = NULL;
-if (isset($json_obj["instructions"])) {
-    $fpInstructions = joinPaths($dirProject, $json_obj["instructions"]);
-    if (file_exists($fpInstructions)) {
-        $instructionsFile = fopen($fpInstructions, "r") or die("Unable to open specified instructions file.");
-        $instructions = fread($instructionsFile, filesize($fpInstructions));
-        fclose($instructionsFile);
-    }   
-}
-
-// Set survey.
-$survey = NULL;
-if (isset($json_obj["survey"])) {
-    $fpSurvey = joinPaths($dirProject, $json_obj["survey"]);
-    if (file_exists($fpSurvey)) {
-        $surveyFile = fopen($fpSurvey, "r") or die("Unable to open specified survey file.");
-        $survey = fread($surveyFile, filesize($fpSurvey));
-        fclose($surveyFile);
-        $appState["isSurvey"] = true;
-    }   
+    $appState["docket"] = prepareDocket($dirProject, $json_obj["docket"], $nStimuli);
+    $appState["trialIdx"] = 0;  // TODO
+    $appState["docketIdx"] = 0;
 }
 
 $projectConfig = array(
-    "stimulusList"=>$stimulusList, "appState"=>$appState,
-    "instructions"=>$instructions, "consent"=>$consent, "survey"=>$survey,
+    "stimulusList"=>$stimulusList, "appState"=>$appState
 );
 echo json_encode($projectConfig);
 ?>

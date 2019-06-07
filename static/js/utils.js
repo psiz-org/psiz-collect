@@ -201,3 +201,15 @@ function preload(arrayOfImages) {
 function onlyUnique(value, index, self) { 
     return self.indexOf(value) === index;
 }
+
+function pad(n, width, z) {
+    z = z || '0';
+    n = n + '';
+    return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
+}
+
+function clientTimestamp() {
+    var d = new Date();
+    timestampStr = "" + d.getFullYear() + "-" + pad(d.getMonth(),2) + "-" + pad(d.getDate(), 2) + " " + pad(d.getHours(), 2) + ":" + pad(d.getMinutes(), 2) + ":" + pad(d.getSeconds(), 2);
+    return timestampStr;
+}

@@ -1,12 +1,12 @@
 {
-    "generator": "stochastic",
-    "consent": "consent.html",
-    "survey": "survey.html",
-    "docketSpec": {
-        "nTrial": 30,
-        "nCatch": 1,
-        "nReference": 8,
-        "nSelect": 2,
-        "isRanked": true
-    }
+    "docket": [
+        {
+            "content": "blockSpec",
+            "nTrial": 3,
+            "nCatch": 0,
+            "nReference": 8,
+            "nSelect": 2,
+            "isRanked": true
+        }
+    ]
 }
