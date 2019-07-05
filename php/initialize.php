@@ -179,7 +179,7 @@ function retrieveStimulusList($dirProject) {
  */
 function retrieveProtocolHistory($link, $projectId){
     $protocolHistory = [];
-    $query = "SELECT protocol_id FROM assignment WHERE project_id=?";
+    $query = "SELECT protocol_id FROM assignment WHERE project_id=? AND (status_code=0 OR status_code=1)";
     if ($stmt = mysqli_prepare($link, $query)) {
         mysqli_stmt_bind_param($stmt, 's', $projectId);
         mysqli_stmt_execute($stmt);
