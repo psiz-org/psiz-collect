@@ -4,11 +4,10 @@ PsiZ Collect is intended to be a template for creating a web-based application f
 
 ## How it works
 1. Install application.
-2. Craete a new collection project.
+2. Create a new collection project.
 3. Start collecting your data.
 
 ## 1. Install application
-<!-- This focuses on general setup TODO -->
 * 1.1 Clone webfiles to desired location.
 * 1.2 Set DIR_COLLECT.
 * 1.3 Set up re-write rules. 
@@ -21,11 +20,11 @@ PsiZ Collect is intended to be a template for creating a web-based application f
 ### 1.2 Set DIR_COLLECT
 ```
 DIR_COLLECT
-+-- \php
-+-- \projects
-+-- \static
-+-- \templates
-+-- collect.php
++-- /php
++-- /projects
++-- /static
++-- /templates
++-- /collect.php
 ```
 
 Instead of assuming that DIR_COLLECT will also be the root of the website, the PHP code uses the environment variable DIR_COLLECT. This environment variable can be set by editing your vhost file under `/etc/apache2/sites-available/`. Don't forget to call `sudo service apache2 restart` when you are done modifying the vhost.
@@ -34,9 +33,9 @@ ServerAdmin admin@host
 DocumentRoot /var/www/my_website
 ServerName local.server
 ServerAlias local.alias.server
-SetEnv DIR_COLLECT /var/www/my_website/path_to_collect
+SetEnv DIR_COLLECT /var/www/my_website/path_to_collect <-- add this line
 ```
-If the PsiZ Collect website resides at the root of the website, then DIR_COLLECT will have the same path as DOCUMENT_ROOT. If you do not have control of the vhost file, you can set the variable in a `.htaccess` file. However, this approach requires that `SetEnv` be allowed in `.htaccess` files, which is specified using the `AllowOverride` directive. If neither of these is an option, you can change the relevant lines of PHP code contained in postProject:
+If the PsiZ Collect website resides at the root of the website, then DIR_COLLECT will have the same path as DOCUMENT_ROOT. If you do not have control of the vhost file, you can set the variable in a `.htaccess` file. However, this approach requires that `SetEnv` be allowed in `.htaccess` files, which is specified using the `AllowOverride` directive. If neither of these is an option, you can change the relevant lines of PHP code contained in TODO:
 ```
 // Change this line...
 $dirCollect = getenv('DIR_COLLECT');
@@ -54,8 +53,23 @@ RewriteRule ^collect/([A-Za-z0-9]+)/$ collect/psiz-collect/index.php?projectId=$
 
 ### 1.4 Set up MySQL database.
 <!-- TODO -->
-Set MySQL credentials.
-Set credentials path in php files.
+Set MySQL credentials by adding a block in `.mysql/credentials`:
+```
+...
+
+[psiz]
+servername = localhost
+username = <my_user_name>
+password = <my_password>
+database = psiz
+
+...
+```
+
+Set credentials path in `utils.php` file. TODO implement alternative.
+```
+$mysqlCredentialsPath = '/home/<my_user_name>/.mysql/credentials';
+```
 
 Create the MySQL database on the host server. After logging into MySQL, execute:
 ``mysql> SOURCE db_install.sql;``
@@ -73,15 +87,14 @@ status_code
 <!-- TODO hello world -->
 <!-- TODO test script Success!, Hello world!, much wow, wubba lubba dub dub, It's working!-->
 
-## 2. Create a new collection project.
+## 2. Create a new project.
 To create a new project, start by creating a new project directory inside the `projects` directory. The new project directory should be given a unique name with no whitespace.
 
 Once you have created a new project directory, you must supply the following items:
 1. A set of stimuli.
 2. One or more collection protocols.
-3. (optional) A consent form.
-4. (optional) Custom experiment instructions.
-5. (optional) A survey.
+3. (optional) Additional content such as a consent form,
+instructions, or a survey.
 
 You should consider creating a new project when you would like to infer an embedding for a new, distinct set of stimuli. If you are looking to integrate new stimuli with an existing set of stimuli, you may want to consider expanding the stimuli list of an existing project.
 
@@ -117,6 +130,7 @@ find path/to/dataset -type f -iname "*.jpg" -o -iname "*.png" > stimuli.txt
 It is critically important that the order of the stimuli in stimuli.txt file not change once you have started collecting data. Instead of storing filenames, only the indices are stored. It's fine to add additional lines for new stimuli, but do not alter existing lines.
 
 ### 2.2 Collection Protocol(s)
+<!-- TODO describe how backend PHP attempts to balance protocols -->
 An experiment protocol is a JSON file that specifies how to generate a docket. A docket is a sequence of pages to show a participant. Most of these pages will be trials, but can also be instructions, consent forms or surveys. To provide sufficient flexibility, dockets can be specified in a number of ways.
 
 The most low-level docket component is a *trial*. A trial requires the following information:
@@ -170,11 +184,12 @@ shuffle: shuffle order of trials
 For clarity to the participant, it is probably best not to mix unranked and ranked trials within a session.
 
 
-### 2.3 Consent Form
-
-### 2.4 Experiment Instructions
-
-### 2.5 Survey
+### 2.3 Additional Content (optional)
+<!-- TODO -->
+Additional content is displayed as a `message`
+Consent Form
+Experiment Instructions
+Survey
 
 ## Additional Details
 
