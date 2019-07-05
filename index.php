@@ -47,7 +47,7 @@
 
     <div class="container app">
         <div class='docket-progress'>
-            Progress: <span id='docket-progress__counter'>0</span> / <span class='docket-progress__total'>50</span>
+            Progress: <span id='docket-progress__counter'>-</span> / <span class='docket-progress__total'>-</span>
             <div class='docket-progress__groove'>
                 <div class='docket-progress__bar'>
                 </div>
@@ -61,7 +61,8 @@
         <?php require "templates/grid.php"; ?>
 
         <?php require "templates/final.php"; ?>
-        </div>
+        <!-- TODO remove extra close div? -->
+        </div> 
     </div>
 
     <div class='container-fluid overlay overlay-instructions'>
