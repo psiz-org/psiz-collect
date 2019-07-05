@@ -2,4 +2,5 @@
 .pytest_cache/
 .vscode/
 datasets/
-projects/
+website/projects/
+deploy_website.py
