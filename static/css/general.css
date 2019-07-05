@@ -183,6 +183,14 @@ Block: message
 .message__hide {
     display: none;
 }
+
+.message__comment-box {
+    width: 100%;
+    color: #e6e6e6;
+    background-color: #404040;
+    border-color: #00ffcc;
+}
+
 /*
 ================================================================================
 Block: overlay
