@@ -1,4 +1,4 @@
-Assumed Server Directory structure
+On the web server, the assume directory structure is as follows:
 `.psiz-collect/`
     `obs/`
         `extract_observations.py`
@@ -9,23 +9,13 @@ Assumed Server Directory structure
             `obs.hdf5`
             `summary.txt`
 
-MAYBE Assumed Local Directory structure
-    `<my_project_1/>`
-        `raw/`
-            `obs.hdf5`
-            `summary.txt`
-        `preprocess_obs.py`
 
-
-on server, `obs/` directory
-
-in `obs/` directory script `extract_observations.py` for parsing MySQL data into obs.
-
-To move to server:
-scp Websites/psiz-collect/python/extract_observations.py bdroads@104.236.150.245:/home/bdroads/psiz-collect/obs/extract_observations.py
+The Python script `extract_observations.py` is used for parsing MySQL data
+into a psiz.trials.Obsevation object.
 
 obs will be created and placed in a directory with the same name as the provided project ID. Any existing data will be over-written.
 
 Some summary information is also written to summary.txt
 
-pulls obs and places them in a `raw/` directory for 
+To move to server:
+scp Websites/psiz-collect/python/extract_observations.py bdroads@104.236.150.245:/home/bdroads/.psiz-collect/obs/extract_observations.py
