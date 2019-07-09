@@ -1,10 +1,8 @@
 .DS_Store
 .pytest_cache/*
 .vscode/*
-python/__pycache__/
-datasets/
-website/projects/
-sql/projects/
+python/__pycache__/*
+website/projects/*
 deploy_website.py
-todo.txt
+TODO.txt
 
