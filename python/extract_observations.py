@@ -5,10 +5,10 @@ user-supplied `project_id`. All COMPLETED assignments (i.e.,
 status_code = 1) belonging to the requested project are selected from
 the database and instantiated as an Observations object. The created
 observations are saved in a directory with the same name as the
-supplied `project_id`, i.e., `obs/<project_id>/obs.hdf5` (see README
-for more regarding the assumed directory structure). It is assumed that
-this script resides in the `obs/` directory and is called from within
-the `obs/` directory.
+supplied `project_id`, i.e., `.psiz-collect/obs/<project_id>/obs.hdf5`
+(see README for more regarding the assumed directory structure). It is
+also assumed that this script resides in the `obs/` directory and is
+called from within the `obs/` directory.
 
 Important to note, the Observations object uses the MySQL database
 `assignment_id` as the `agent_id`. This allows the created Observations
@@ -265,7 +265,7 @@ def write_summary(obs, comp_stats, wrn_msg, fp_summary):
 
 
 if __name__ == "__main__":
-    fp_data = Path.home() / Path('obs')
+    fp_data = Path.home() / Path('.psiz-collect', 'obs')
     fp_mysql_credentials = Path.home() / Path('.mysql/credentials')
 
     # Parse arguments.
