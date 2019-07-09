@@ -117,7 +117,7 @@ var AppController = function(stimulusList, appState) {
         var media = "";
         if (extension == "") {
             media = "text";
-        } else if ($.inArray(extension, ['jpg', 'png']) >= 0) {
+        } else if ($.inArray(extension, ['jpg', 'jpeg', 'png']) >= 0) {
             media = "image";
         } else if ($.inArray(extension, ['mp4', 'webm', 'ogv']) >= 0) {
             media = "video"
