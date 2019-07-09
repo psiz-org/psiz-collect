@@ -1,6 +1,6 @@
 .DS_Store
-.pytest_cache/
-.vscode/
+.pytest_cache/*
+.vscode/*
 python/__pycache__/
 datasets/
 website/projects/
