@@ -4,5 +4,6 @@
 python/__pycache__/*
 website/projects/*
 deploy_website.py
+deploy_project.py
 TODO.txt
 

@@ -161,9 +161,9 @@ Block: message
 
 .message__scroll {
     width: auto;
-    height: 310px;
-    overflow: scroll;
-    /* background-color: #e6e6e6; */
+    height: 315px;
+    overflow-y: scroll;
+    background-color: #4d4d4d;
 }
 
 .message__radio-label{
@@ -564,6 +564,37 @@ Block: custom-button
     border-width: thin;
     text-align: center;
     border-color: #00CCFF;
+}
+
+/*
+================================================================================
+Block: custom-button
+================================================================================
+*/
+
+.custom-checkbox {
+    display: inline-block;
+    width: 2em;
+    height: 2em;
+    margin-right: 5px;
+    border-radius: 5px;
+    border-style: solid;
+    border-width: thin;
+    border-color: #00CCFF;
+}
+
+.custom-checkbox:hover {
+    cursor: pointer;
+    border-color: #FFD119;
+}
+
+.custom-checkbox--unchecked {
+    background-color: transparent;
+    
+}
+
+.custom-checkbox--checked {
+    background-color: transparent;
 }
 
 /*

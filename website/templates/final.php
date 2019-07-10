@@ -11,6 +11,7 @@
                     <textarea id="voucher__code" rows="1" readonly>XXXXXXXXXXXX</textarea>
                 </div>
                 <div id="voucher__hint">click box to select</div>
+                <p>Please close the browser tab after submitting the voucher code. If you encounter any issues submitting the HIT, please email the requester and include the voucher code in your email.</p>
             </div>
             <div class="voucher__alt">
                 <p>You can now close the browser tab.</p>
