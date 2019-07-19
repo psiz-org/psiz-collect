@@ -1,7 +1,7 @@
 <?php
 
-// NOTE: You must change the filepath to reflect your server setup.
-$mysqlCredentialsPath = '/home/bdroads/.mysql/credentials';
+$mysqlCredentialsPath = getenv('MYSQL_CRED');
+
 // Parse MySQL configuration.
 $config = parse_ini_file($mysqlCredentialsPath, true);
 

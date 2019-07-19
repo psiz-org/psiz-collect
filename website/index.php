@@ -81,7 +81,7 @@
     <script src="../psiz-collect/static/js/AppController.js"></script>
     <script src="../psiz-collect/static/js/utils.js"></script>
     <script type="text/javascript">
-    var queryVariables = <?php require "./php/queryString.php"; ?>;
+    var queryVariables = <?php require "./php/querystring-parameters.php"; ?>;
     var client = clientInfo();
 
     var stimulusList = [];
@@ -89,18 +89,12 @@
     if (sessionStorage.getObject(queryVariables["projectId"])) {
         appState = sessionStorage.getObject(queryVariables["projectId"]);
     } else {
-        if (queryVariables["assignmentId"] == null) {
-            // Set AMT variables to empty strings.
-            queryVariables["assignmentId"] = "";
-            queryVariables["hitId"] = "";
-            queryVariables["turkSubmitTo"] = "";
-        }
         appState = {
             projectId: queryVariables["projectId"],
             workerId: queryVariables['workerId'],
             amtAssignmentId: queryVariables["assignmentId"],
             amtHitId: queryVariables["hitId"],
-            turkSubmitTo: queryVariables["turkSubmitTo"],
+            amtIsLive: queryVariables["isLive"],
             browser: client["browser"],
             platform: client["platform"],
             postStatus: "",
@@ -110,7 +104,7 @@
     
     $(document).ready(function () {
         // If there is no workerId show login, otherwise proceed.
-        if (appState['workerId'] == null) {
+        if (appState['workerId'] == "") {
             $(".login").show(0);
         } else {
             launchController();

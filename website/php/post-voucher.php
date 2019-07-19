@@ -1,7 +1,7 @@
 <?php
-// NOTE: You must change the filepath to reflect your server setup.
-$mysqlCredentialsPath = '/home/bdroads/.mysql/credentials';
+$mysqlCredentialsPath = getenv('MYSQL_CRED');
 
+$amtIsLive = $_POST['amtIsLive'];
 $amtAssignmentId = $_POST['amtAssignmentId'];
 $amtWorkerId = $_POST['amtWorkerId'];
 $amtHitId = $_POST['amtHitId'];
@@ -48,9 +48,9 @@ if ($count == 0) {
     $voucherCode = randomString(12);
     $voucherHash = hash('sha512', $voucherCode);
     // Insert voucher into table.
-    $query = "INSERT INTO voucher (amt_assignment_id, amt_worker_id, amt_hit_id, voucher_hash) VALUES (?, ?, ?, ?)";
+    $query = "INSERT INTO voucher (amt_is_live, amt_assignment_id, amt_worker_id, amt_hit_id, voucher_hash) VALUES (?, ?, ?, ?, ?)";
     $stmt = mysqli_prepare($link, $query);
-    mysqli_stmt_bind_param($stmt, 'ssss', $amtAssignmentId, $amtWorkerId, $amtHitId, $voucherHash);
+    mysqli_stmt_bind_param($stmt, 'issss', $amtIsLive, $amtAssignmentId, $amtWorkerId, $amtHitId, $voucherHash);
     mysqli_stmt_execute($stmt);
     mysqli_stmt_close($stmt);
 } else {

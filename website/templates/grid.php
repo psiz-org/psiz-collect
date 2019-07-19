@@ -7,7 +7,9 @@
         <div class="col-xs-10 col-md-10">
             <div class="grid__prompt">
                 <span class="grid__prompt-text">
-                    Select the <span class="text-n-select"></span> most similar <span class="text-tile-grammar"></span>.
+                    Select <span class="text-n-select"></span> <span class="text-tile-grammar"></span>.
+                    <!-- Select the <span class="text-n-select"></span> most similar <span class="text-tile-grammar"></span>. -->
+                    <!-- Select the <span class="theme-color-1"><span class="text-n-select"></span> <span class="text-tile-grammar"></span> you consider most similar to the <span class="theme-color-2">center tile</span>. -->
                 </span>
             </div>
         </div>

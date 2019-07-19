@@ -248,6 +248,7 @@ var AppController = function(stimulusList, appState) {
             $(".voucher").show();
             if (appState.voucherCode == "") {
                 var dataToPost = {
+                    amtIsLive: appState.amtIsLive,
                     amtAssignmentId: appState.amtAssignmentId,
                     amtWorkerId: appState.workerId,
                     amtHitId: appState.amtHitId,

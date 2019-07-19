@@ -2,6 +2,10 @@
 
 PsiZ Collect is intended to be a template for creating a web-based application for collecting human similarity judgments. It has been designed to minimize deployment effort. Since it is a web-based application, some assembly is required. Once data is collected, it can be analyzed using the *psiz* python package which can be cloned from [GitHub](https://github.com/roads/psiz).
 
+This setup guide assumes a LAMP stack, a registered domain name, and a SSL certificate. While the code may work with other server configurations, it has only been tested using a LAMP stack.
+<!-- Perspective player and content/payload -->
+<!-- TODO <user> refers to ...; <my_domain> refers to ... -->
+
 ## How it works
 1. Install application.
 2. Create a new collection project.
@@ -9,15 +13,15 @@ PsiZ Collect is intended to be a template for creating a web-based application f
 
 ## 1. Install application
 * 1.1 Clone webfiles to desired location.
-* 1.2 Set DIR_COLLECT.
-* 1.3 Set up re-write rules. 
-* 1.4 Set up MySQL database.
+* 1.2 Set up MySQL database.
+* 1.3 Set environment variables.
+* 1.4 Set up re-write rules.
 * 1.5 (optional) Set AWS and AMT credentials (only necessary if using AMT)
 
-### 1.1 Clone webfiles to desired location.
-<!-- TODO -->
+<!-- TODO the reminder of this document assumes that the code is being installed at /var/www/psiz.org/collect/psiz-collect/. You will have to modify the relevant commands to work for your setup. -->
 
-### 1.2 Set DIR_COLLECT
+### 1.1 Clone webfiles to desired location.
+<!-- TODO All of the relevant webfiles are contained in the directory `website/`-->
 ```
 DIR_COLLECT
 +-- /php
@@ -27,23 +31,62 @@ DIR_COLLECT
 +-- /collect.php
 ```
 
-Instead of assuming that DIR_COLLECT will also be the root of the website, the PHP code uses the environment variable DIR_COLLECT. This environment variable can be set by editing your vhost file under `/etc/apache2/sites-available/`. Don't forget to call `sudo service apache2 restart` when you are done modifying the vhost.
+### 1.2 Set up MySQL database.
+<!-- TODO -->
+To setup the MySQL database we will be creating a credentials file and creating the relevant database.
+
+MySQL credentials are assumed to be stored in the file `/home/<user>/.mysql/credentials`. If you have not done so already, create the hidden directory `.mysql` and the extensionless plain text `credentials` file. 
+<!-- TODO Set the permissions of the -->
+Using a text editor (such as nano), open `credentials` and add the following block:
+```
+...
+
+[psiz]
+servername = localhost
+username = <mysql_username>
+password = <myql_password>
+database = psiz
+
+...
+```
+where `<mysql_username>` and `<myql_password>` have been appropriate substituted with your credentials. This file is intentionally located outside the website root directory to prevent the general public from obtaining these credentials.
+
+If you will be running AMT workers using the voucher system, you will also want to add the following block to `credentials` (if you haven't already):
+```
+...
+
+[amt_voucher]
+servername = localhost
+username = <mysql_username>
+password = <myql_password>
+database = amt_voucher
+
+...
+```
+
+The MySQL database is created by logging into MySQL and executing ``mysql> SOURCE install_db_psiz.sql;``. Note that this code will only create a database called **psiz** if it doesn't already exist. If you will be running AMT workers using the voucher system, you will also want to install the **amt_voucher** database by executing ``mysql> SOURCE install_db_voucher.sql;``.
+
+<!-- TODO database organization -->
+status_code
+    0 - created, not completed, not expired
+    1 - completed
+    2 - not completed, expired
+
+### 1.3 Set environment variables.
+<!-- TODO DIR_COLLECT and MYSQL_CRED -->
+Instead of assuming that DIR_COLLECT will also be the root of the website, the PHP code uses the environment variable DIR_COLLECT. In addition we will use the environment variable MYSQL_CRED to store the path to your MySQL credentials. These environment variables can be set by editing your vhost file under `/etc/apache2/sites-available/`. Don't forget to call `sudo service apache2 restart` when you are done modifying the vhost.
 ```
 ServerAdmin admin@host
 DocumentRoot /var/www/my_website
 ServerName local.server
 ServerAlias local.alias.server
+SetEnv MYSQL_CRED /home/<user>/.mysql/credentials <-- add this line
 SetEnv DIR_COLLECT /var/www/my_website/path_to_collect <-- add this line
 ```
-If the PsiZ Collect website resides at the root of the website, then DIR_COLLECT will have the same path as DOCUMENT_ROOT. If you do not have control of the vhost file, you can set the variable in a `.htaccess` file. However, this approach requires that `SetEnv` be allowed in `.htaccess` files, which is specified using the `AllowOverride` directive. If neither of these is an option, you can change the relevant lines of PHP code contained in TODO:
-```
-// Change this line...
-$dirCollect = getenv('DIR_COLLECT');
-// to ..
-$dirCollect = joinPaths($_SERVER['DOCUMENT_ROOT'], $theRestOfYourPath);
-```
+If the PsiZ Collect website resides at the root of the website, then DIR_COLLECT will have the same path as DOCUMENT_ROOT. If you do not have control of the vhost file, you can set the variable in a `.htaccess` file. However, this approach requires that `SetEnv` be allowed in `.htaccess` files, which is specified using the `AllowOverride` directive.
 
-### 1.3 Set up re-write rules.
+### 1.4 (optional) Set up re-write rules.
+
 <!-- TODO -->
 Modify the .htaccess file at the root of the host website.
 ```
@@ -51,41 +94,11 @@ RewriteEngine on
 RewriteRule ^collect/([A-Za-z0-9]+)/$ collect/psiz-collect/index.php?projectId=$1 [QSA]
 ```
 
-### 1.4 Set up MySQL database.
-<!-- TODO -->
-Set MySQL credentials by adding a block in `.mysql/credentials`:
-```
-...
-
-[psiz]
-servername = localhost
-username = <my_user_name>
-password = <my_password>
-database = psiz
-
-...
-```
-
-Set credentials path in `utils.php` file. TODO implement alternative.
-```
-$mysqlCredentialsPath = '/home/<my_user_name>/.mysql/credentials';
-```
-
-Create the MySQL database on the host server. After logging into MySQL, execute:
-``mysql> SOURCE db_install.sql;``
-
-status_code
-    0 - created, not completed, not expired
-    1 - completed
-    2 - not completed, expired
-
 ### 1.5 (optional) Set AWS and AMT credentials
 <!-- TODO -->
 <!-- store credentials at ~/.aws/credentials -->
 
-
 <!-- TODO hello world -->
-<!-- TODO test script Success!, Hello world!, much wow, wubba lubba dub dub, It's working!-->
 
 ## 2. Create a new project.
 To create a new project, start by creating a new project directory inside the `projects` directory. The new project directory should be given a unique name with no whitespace.
@@ -191,10 +204,34 @@ Consent Form
 Experiment Instructions
 Survey
 
-## Additional Details
+## Additional details
 
 A trial is only shown once all of the assets have been loaded in the browser. This behavior enforces the constaint that participants are presented with all trial content simultaneously. To reduce time spent waiting for stimuli to load, the application starts loading all stimuli, in the order of their occurrence, after the first page has loaded.
 
-## Python Scripts
+## Python scripts
 
 A python script is included to check the validity of a protocol. If a protocol is specified incorrectly, the application will do it's best to recover but may yield dockets that differ from what was intended. For example, if a protocol requests more catch trials `nCatch` than the total number of trials `nTrial`, the docket will contain `nTrial` catch trials.
+
+## Host server organization
+On the web server, the assume directory structure is as follows:
+`.psiz-collect/`
+    `python/`
+        `extract_observations.py`
+    `projects/`
+        `my_project_0/`
+            `obs.hdf5`
+            `summary.txt`
+        `my_project_1/`
+            `obs.hdf5`
+            `summary.txt`
+
+## Miscellaneous
+The Python script `extract_observations.py` is used for parsing MySQL data
+into a psiz.trials.Obsevation object.
+
+obs will be created and placed in a directory with the same name as the provided project ID. Any existing data will be over-written.
+
+Some summary information is also written to summary.txt
+
+To move to server:
+scp Websites/psiz-collect/python/extract_observations.py bdroads@104.236.150.245:/home/bdroads/.psiz-collect/obs/extract_observations.py
