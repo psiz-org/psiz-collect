@@ -31,7 +31,7 @@ object to be used to make subsequent queries to the database about each
 agent. For example, if a particular project includes an add-on survey.
 
 It is assumed that your MySQL credentials are stored at
-`~/.mysql/credentials` with the appropriate format (see README). If
+`~/.mysql/credentials` in the `psiz` block (see README). If
 they are stored somewhere else, with a different format, the variable
 `fp_mysql_credentials`, `host`, `user`,`passwd`, and `db` need to be
 changed.
@@ -58,9 +58,10 @@ import pandas as pd
 import psiz.trials
 
 # Consants used/assumed in the MySQL database.
-STATUS_CREATED = 0
-STATUS_COMPLETED = 1
-STATUS_EXPIRED = 2
+STATUS_CREATED = 0  # Incomplete and not expired.
+STATUS_ACCEPTED = 1  # Completed and met grading criteria.
+STATUS_EXPIRED = 2  # Incomplete and expired.
+STATUS_DROPPED = 3  # Completed but did not meet grading criteria.
 N_MAX_REF = 8
 
 
@@ -153,7 +154,7 @@ def create_obs(sql_cursor, tbl_assignment):
     # Initialize.
     obs = None
     meta = {
-        "assignment_id": tbl_assignment["assignment_id"],
+        "agent_id": tbl_assignment["assignment_id"],
         "protocol_id": tbl_assignment["protocol_id"],
         "status_code": tbl_assignment["status_code"],
         "duration_hit": tbl_assignment["duration_hit"],
@@ -168,7 +169,7 @@ def create_obs(sql_cursor, tbl_assignment):
         "FROM trial WHERE assignment_id=%s"
     )
 
-    for idx, assignment_id in enumerate(meta["assignment_id"]):
+    for idx, assignment_id in enumerate(meta["agent_id"]):
         vals = (int(assignment_id),)
         sql_cursor.execute(query_trial, vals)
 
@@ -177,7 +178,7 @@ def create_obs(sql_cursor, tbl_assignment):
 
         if n_trial > 0:
             meta["n_trial"][idx] = n_trial
-            if meta["status_code"][idx] == STATUS_COMPLETED:
+            if meta["status_code"][idx] == STATUS_ACCEPTED:
                 obs_agent = create_obs_agent(sql_result, assignment_id)
                 if obs is None:
                     obs = obs_agent
@@ -227,37 +228,6 @@ def create_obs_agent(sql_result, assignment_id):
     return obs
 
 
-# def completion_statistics(sql_cursor, assignment_id_list, wrn_msg):
-#     """Determine completion statistics.
-
-#     Arguments:
-#         sql_cursor: A MySQL cursor.
-#         assignment_id_list: A list of database assignment_id's.
-#     """
-#     time_m_list = []
-#     for assignment_id in assignment_id_list:
-#         query_assignment = (
-#             "SELECT begin_hit, end_hit FROM assignment WHERE assignment_id=%s"
-#         )
-#         vals = (assignment_id,)
-#         sql_cursor.execute(query_assignment, vals)
-
-#         sql_result = sql_cursor.fetchall()
-#         total_time_m = (
-#             sql_result[0][1] - sql_result[0][0]
-#         ).total_seconds() / 60
-#         time_m_list.append(total_time_m)
-#     comp_stats = {
-#         "time_total_m": {
-#             "min": np.min(time_m_list),
-#             "max": np.max(time_m_list),
-#             "mean": np.mean(time_m_list),
-#             "median": np.median(time_m_list)
-#         }
-#     }
-#     return comp_stats, wrn_msg
-
-
 def write_summary(obs, meta, fp_summary):
     """Write a plain-text summary of the observations.
 
@@ -278,7 +248,7 @@ def write_summary(obs, meta, fp_summary):
         n_unique_stim = len(np.unique(obs.stimulus_set))
         n_unique_protocol = len(np.unique(
             meta["protocol_id"][np.equal(
-                meta["status_code"], STATUS_COMPLETED
+                meta["status_code"], STATUS_ACCEPTED
             )]
         ))
         avg_trial_rt = np.mean(obs.rt_ms) / 1000
@@ -302,23 +272,23 @@ def write_summary(obs, meta, fp_summary):
 
     wrn_msg = ''
     wrn_count = 0
-    for idx, assignment_id in enumerate(meta["assignment_id"]):
+    for idx, agent_id in enumerate(meta["agent_id"]):
         if (
-            meta["status_code"][idx] == STATUS_COMPLETED and
+            meta["status_code"][idx] == STATUS_ACCEPTED and
             meta["n_trial"][idx] == 0
         ):
             wrn_msg = wrn_msg + (
-                '    assignment_id={0} | '
-                'Marked COMPLETED, but n_trial=0\n'.format(assignment_id)
+                '    agent_id={0} | '
+                'Marked COMPLETED, but n_trial=0\n'.format(agent_id)
             )
             wrn_count += 1
         if (
-            meta["status_code"][idx] != STATUS_COMPLETED and
+            meta["status_code"][idx] != STATUS_ACCEPTED and
             meta["n_trial"][idx] > 0
         ):
             wrn_msg = wrn_msg + (
-                '    assignment_id={0} | '
-                'Marked INCOMPLETE, but n_trial>0\n'.format(assignment_id)
+                '    agent_id={0} | '
+                'Marked INCOMPLETE, but n_trial>0\n'.format(agent_id)
             )
             wrn_count += 1
     if wrn_count > 0:
@@ -336,12 +306,8 @@ def write_metadata(md, fp_meta):
         fp_meta: The file path of the metadata file.
 
     """
-    # f = open(fp_meta, "w")
-    # f.write("Observations Metadata\n")
-    # f.write("Last Updated: {0}\n\n".format(str(datetime.now())))
-    # f.close()
     df = pd.DataFrame.from_dict(md)
-    df.to_csv(fp_meta)
+    df.to_csv(fp_meta, index=False)
 
 
 if __name__ == "__main__":
