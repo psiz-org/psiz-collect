@@ -1,9 +1,21 @@
 .DS_Store
-.pytest_cache/*
 .vscode/*
-python/__pycache__/*
-website/projects/*
+
 deploy_website.py
 deploy_project.py
 TODO.txt
 
+# Compiled python modules.
+python/psizcollect/*.pyc
+python/psizcollect/__pycache__/*
+
+# Setuptools distribution folder.
+python/psizcollect/dist/
+python/psizcollect/build/
+
+# Python egg metadata, regenerated from source files by setuptools.
+python/*.egg-info
+python/*.egg
+
+python/psizcollect/.cache/*
+.pytest_cache/*
