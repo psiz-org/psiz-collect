@@ -69,8 +69,9 @@ The MySQL database is created by logging into MySQL and executing ``mysql> SOURC
 <!-- TODO database organization -->
 status_code
     0 - created, not completed, not expired
-    1 - completed
+    1 - completed, keep
     2 - not completed, expired
+    3 - completed, dropped
 
 ### 1.3 Set environment variables.
 <!-- TODO DIR_COLLECT and MYSQL_CRED -->
@@ -232,6 +233,3 @@ into a psiz.trials.Obsevation object.
 obs will be created and placed in a directory with the same name as the provided project ID. Any existing data will be over-written.
 
 Some summary information is also written to summary.txt
-
-To move to server:
-scp Websites/psiz-collect/python/extract_observations.py bdroads@104.236.150.245:/home/bdroads/.psiz-collect/obs/extract_observations.py
