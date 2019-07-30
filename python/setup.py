@@ -14,7 +14,7 @@ setup(
     license='Apache Licence 2.0',
     packages=['psizcollect'],
     install_requires=[
-        'numpy', 'pandas', 'mysql-connector-python'
+        'numpy', 'pandas', 'mysql-connector-python', 'psiz>=0.2.1'
     ],
     include_package_data=True,
 )
