@@ -1,0 +1,12 @@
+{
+    "docketSpec": [
+        {
+            "content": "blockSpec",
+            "nTrial": 30,
+            "nCatch": 1,
+            "nReference": 2,
+            "nSelect": 1,
+            "isRanked": true
+        }
+    ]
+}
