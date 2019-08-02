@@ -2,7 +2,6 @@
 .vscode/*
 
 deploy_website.py
-deploy_project.py
 TODO.txt
 
 # Compiled python modules.
