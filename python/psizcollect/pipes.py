@@ -328,7 +328,7 @@ def pull_obs_from_host(host_node, project_id, fp_assets, verbose=0):
 def sync_payload(fp_payload, host_node, project_id):
     """Sync project payload with server."""
     cmd = (
-        "rsync -rtzi --exclude '{0}/retired' {0}/ {1}@{2}:{3}/{4}/ --delete"
+        "rsync -rtzi --exclude 'retired' {0}/ {1}@{2}:{3}/{4}/ --delete"
     ).format(
         os.fspath(fp_payload),
         host_node["user"], host_node["ip"], host_node["public"], project_id
