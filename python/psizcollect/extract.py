@@ -14,43 +14,13 @@
 # limitations under the License.
 # ==============================================================================
 
-"""Extract and process observations from MySQL database.
-
-This script creates a psiz.trials.Observations object for the
-user-supplied `project_id`. All COMPLETED assignments (i.e.,
-status_code = 1) belonging to the requested project are selected from
-the database and instantiated as an Observations object.
-
-Completed assignments are graded based on catch trial performance and
-dropped if they do not meet the provided criterion. In addition, the
-status code of assignments that do not meet criterion is updated to
-status_code=3. After grading, all catch trials are removed before
-saving the observations to disk.
-
-The accepted observations are saved in a directory with the same name
-as the supplied `project_id`, i.e.,
-`.psiz-collect/projects/<project_id>/obs.hdf5` (see README for more
-regarding the assumed directory structure).
-
-In addition to the observations object, metadata (meta.txt) and a
-summary is generated (summary.txt). The metadata file can be used to
-map agent ID's back to the MySQL database's assignment IDs.
+"""Moduel for extracting observations from a MySQL database.
 
 It is assumed that your MySQL credentials are stored at
 `~/.mysql/credentials` in the `psiz` block (see README). If
 they are stored somewhere else, with a different format, the variable
 `fp_mysql_credentials`, `host`, `user`,`passwd`, and `db` need to be
 changed.
-
-Arguments:
-    See the argument parser or execute
-    `python extract_observations.py -h`.
-
-Example Usage:
-    python extract_observations "birds-region"
-
-Todo:
-    agent_id
 
 """
 
@@ -75,8 +45,46 @@ STATUS_DROPPED = 3  # Completed but did not meet grading criteria.
 N_MAX_REF = 8
 
 
-def extract_observations(project_id, grade_mode, grade_threshold, verbose=0):
-    """Extract observations."""
+def extract_observations(
+        project_id, grade_mode="lenient", grade_threshold=.8, verbose=0):
+    """Extract and process observations from MySQL database.
+
+    Data stored in a MySQL database is extracted and processed into
+    three separate files: obs.hdf5, meta.txt, and summary.txt.
+
+    This script creates a psiz.trials.Observations object for the
+    user-supplied `project_id`. All COMPLETED assignments (i.e.,
+    status_code = 1 or status_code=3) belonging to the requested
+    project are graded to see if they meet threshold for being
+    accepted and included in the final Observations object.
+
+    Completed assignments are graded based on catch trial performance
+    and dropped if they do not meet the provided criterion. In
+    addition, the status code of assignments that do not meet criterion
+    is updated to status_code=3. After grading, all catch trials are
+    removed before saving the observations to disk.
+
+    The accepted observations are saved in a directory with the same
+    name as the supplied `project_id`, i.e.,
+    `.psiz-collect/projects/<project_id>/obs.hdf5` (see README for more
+    regarding the assumed directory structure).
+
+    In addition to the observations object, metadata (meta.txt) and a
+    summary is generated (summary.txt). The metadata file can be used
+    to map agent ID's back to the MySQL database's assignment IDs.
+
+    Arguments:
+        project_id: String indicating project ID. This should
+        correspond to a string used in the `project_id` column of the
+            `assignments` table.
+        grade_mode (optional): The grade mode to use when grading catch trials.
+            See psiz.preprocessing.grade_catch_trials for details
+            regarding the accepted inputs.
+        grade_threshold (optional): The grading threshold to use for determining
+            if an assignment should be accepted or dropped.
+        verbose (optional): Verbosity of output.
+
+    """
     fp_mysql_credentials = Path.home() / Path('.mysql/credentials')
     fp_app = Path.home() / Path('.psiz-collect')
 
@@ -89,7 +97,6 @@ def extract_observations(project_id, grade_mode, grade_threshold, verbose=0):
     fp_summary = fp_project / Path("summary.txt")
 
     # Establish MySQL connection using stored credentials.
-    # my_cursor = psiz_cursor(fp_mysql_credentials)
     config = configparser.ConfigParser()
     config.read(fp_mysql_credentials)
     my_cxn = mysql.connector.connect(
@@ -106,14 +113,13 @@ def extract_observations(project_id, grade_mode, grade_threshold, verbose=0):
     obs, meta = assemble_accepted_obs(
         my_cxn, tbl_assignment, grade_mode, grade_threshold
     )
-    obs.save(fp_obs)
-    psizcollect.pipes.write_metadata(meta, fp_meta)
-
-    # Save a plain text summary of the Observations.
-    psizcollect.pipes.write_summary(obs, meta, fp_summary)
-
     # Close the connection.
     my_cxn.close()
+
+    # Save observations, metadata, and summary.
+    obs.save(fp_obs)
+    psizcollect.pipes.write_metadata(meta, fp_meta)
+    psizcollect.pipes.write_summary(obs, meta, fp_summary)
 
 
 def fetch_assignment(my_cxn, project_id):
@@ -204,9 +210,9 @@ def assemble_accepted_obs(
 
     query_trial = (
         "SELECT trial_id, assignment_id, n_select, is_ranked, q_idx, "
-        "r1_idx, r2_idx, r3_idx, r4_idx, r5_idx, r6_idx, r7_idx, r8_idx, "
-        "start_ms, r1_rt_ms, r2_rt_ms, r3_rt_ms, r4_rt_ms, r5_rt_ms, "
-        "r6_rt_ms, r7_rt_ms, r8_rt_ms "
+        "c1_idx, c2_idx, c3_idx, c4_idx, c5_idx, c6_idx, c7_idx, c8_idx, "
+        "start_ms, c1_rt_ms, c2_rt_ms, c3_rt_ms, c4_rt_ms, c5_rt_ms, "
+        "c6_rt_ms, c7_rt_ms, c8_rt_ms, submit_rt_ms "
         "FROM trial WHERE assignment_id=%s"
     )
 
@@ -271,6 +277,7 @@ def create_obs_agent(sql_result, agent_id):
     n_select = np.ones([n_trial], dtype=int)
     is_ranked = np.ones([n_trial], dtype=int)
     rt_ms = np.zeros([n_trial, N_MAX_REF], dtype=int)
+    rt_submit_ms = np.zeros([n_trial], dtype=int)
     for i_trial in range(n_trial):
         response_set[i_trial, 0] = sql_result[i_trial][4]
         response_set[i_trial, 1] = sql_result[i_trial][5]
@@ -293,11 +300,11 @@ def create_obs_agent(sql_result, agent_id):
         rt_ms[i_trial, 5] = sql_result[i_trial][19]
         rt_ms[i_trial, 6] = sql_result[i_trial][20]
         rt_ms[i_trial, 7] = sql_result[i_trial][21]
+        rt_submit_ms[i_trial] = sql_result[i_trial][22]
 
-    rt_ms = np.max(rt_ms, axis=1)
     obs = psiz.trials.Observations(
         response_set, n_select=n_select, is_ranked=is_ranked,
-        agent_id=agent_id, rt_ms=rt_ms
+        agent_id=agent_id, rt_ms=rt_submit_ms
     )
     return obs
 
@@ -315,39 +322,10 @@ def update_status(my_cxn, assignment_id, status_code):
     ).format(status_code, assignment_id)
     my_cursor = my_cxn.cursor()
     my_cursor.execute(query)
-    my_cursor.close()
     my_cxn.commit()
     print(
         '      SET status_code={0:d} | {1} row(s) affected'.format(
             status_code, my_cursor.rowcount
         )
     )  # TODO
-
-
-# if __name__ == "__main__":
-#     fp_app = Path.home() / Path('.psiz-collect')
-#     fp_mysql_credentials = Path.home() / Path('.mysql/credentials')
-
-#     # Parse arguments.
-#     parser = argparse.ArgumentParser()
-#     parser.add_argument(
-#         "project_id", type=str,
-#         help="String indicating project ID."
-#     )
-#     parser.add_argument(
-#         "-m", "--mode", type=str, default="partial",
-#         help="The grade mode to use when grading catch trials."
-#     )
-#     parser.add_argument(
-#         "-t", "--threshold", type=int, default=1.0,
-#         help="The grade threshold to use when grading catch trials."
-#     )
-#     parser.add_argument(
-#         "-v", "--verbose", type=int, default=0,
-#         help="Increase output verbosity"
-#     )
-#     args = parser.parse_args()
-#     main(
-#         fp_mysql_credentials, fp_app, args.project_id, args.grade_mode,
-#         args.grade_threshold, args.verbose
-#     )
+    my_cursor.close()

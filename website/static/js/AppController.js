@@ -540,13 +540,17 @@ var AppController = function(stimulusList, appState) {
             }
             var postData = $.post( "../psiz-collect/php/postObs.php", dataToPost, function(result) {
                 var returnedMsg = JSON.parse(result);
+                console.log(returnedMsg);
                 appState.postStatus = 1;
                 sessionStorage.setObject(appState.projectId, appState);
+            }).fail(function(err, status) {
+                console.log(err);
+                console.log(status);
             });
         }
     }
 
-    function reformatAsObservation(trial, startTimestamp, selectionState) {
+    function appendBehavior(trial, startTimestamp, submitTimeMs, selectionState) {
         // Reformat from docket format to observation format.
         var obsIdx = [];
         var choiceRtMs = [];
@@ -562,13 +566,17 @@ var AppController = function(stimulusList, appState) {
             }
         }
         // Add placeholders for unused references.
-        for (var iReference = trial.references.length; iReference < N_CHOICE_TILE; iReference++) {
+        nReference = trial.references.length
+        for (var iReference = nReference; iReference < N_CHOICE_TILE; iReference++) {
+            trial.references.push(-1);
             obsIdx.push(-1);
             choiceRtMs.push(0);
         }
-        trial.references = obsIdx;
+
+        trial.choices = obsIdx;
         trial.startTimestamp = startTimestamp;
         trial.choiceRtMs = choiceRtMs;
+        trial.submitRtMs = submitTimeMs;
     }
 
     $("#grid__info-button").click( function() {
@@ -657,13 +665,11 @@ var AppController = function(stimulusList, appState) {
             stopwatch.stop()
             submitTimeMs = stopwatch.read();
 
-            // console.log("references: " + appState.docket[appState.docketIdx].references)
             var trial = appState.docket[appState.docketIdx];
-            reformatAsObservation(trial, startTimestamp, selectionState)
-            // console.log("references: " + appState.docket[appState.docketIdx].references)
+            appendBehavior(trial, startTimestamp, submitTimeMs, selectionState)
+            console.log("trial: " + appState.docket[appState.docketIdx])
 
             appState.docketIdx += 1;
-            appState.trialIdx += 1;
 
             uiResetGrid();
 

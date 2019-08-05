@@ -268,6 +268,7 @@ if (! isset($appState["protocolId"])) {
     $appState["assignmentId"] = mysqli_insert_id($link);
     mysqli_stmt_close($stmt);
 }
+mysqli_close($link);
 
 $fpProtocol = joinPaths($dirProject, $appState["protocolId"]);
 $json_str = file_get_contents($fpProtocol);
@@ -275,7 +276,6 @@ $json_obj = json_decode($json_str, true);
 
 if (! isset($appState["docket"])) {
     $appState["docket"] = prepareDocket($dirProject, $json_obj["docket"], $nStimuli);
-    $appState["trialIdx"] = 0;  // TODO
     $appState["docketIdx"] = 0;
 }
 
