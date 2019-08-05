@@ -16,7 +16,8 @@
 
 """Pipes module.
 
-Tools for assembling pipelines.
+Tools for assembling pipelines. See README for assumed dictionary
+structure of `host_node` and `compute_node`.
 
 Functions:
     psiz_cursor:
@@ -35,6 +36,7 @@ import pandas as pd
 import paramiko
 import psiz.trials
 import psiz.preprocess
+import psiz.datasets
 
 # Consants used/assumed in the MySQL database.
 STATUS_CREATED = 0  # Incomplete and not expired.
@@ -244,7 +246,7 @@ def protocol_summary(obs, meta):
     )
     msg += "\n"
 
-    msg += "    Last {0} protocols:\n".format(n_last)
+    msg += "    Last {0} protocols accepted:\n".format(n_last)
     msg += "      | N  | protocol_id\n"
     msg += "      ------------------\n"
     n_start = np.maximum(n_uniq_accepted - n_last, 0)
@@ -319,5 +321,16 @@ def pull_obs_from_host(host_node, project_id, fp_assets, verbose=0):
 
     cmd = 'scp {0}@{1}:.psiz-collect/projects/{2}/summary.txt {3}/'.format(
         host_node["user"], host_node["ip"], project_id, os.fspath(fp_obs)
+    )
+    subprocess.run(cmd, shell=True)
+
+
+def sync_payload(fp_payload, host_node, project_id):
+    """Sync project payload with server."""
+    cmd = (
+        "rsync -rtzi --exclude '{0}/retired' {0}/ {1}@{2}:{3}/{4}/ --delete"
+    ).format(
+        os.fspath(fp_payload),
+        host_node["user"], host_node["ip"], host_node["public"], project_id
     )
     subprocess.run(cmd, shell=True)
