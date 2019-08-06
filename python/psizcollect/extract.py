@@ -14,7 +14,7 @@
 # limitations under the License.
 # ==============================================================================
 
-"""Moduel for extracting observations from a MySQL database.
+"""Module for extracting observations from a MySQL database.
 
 It is assumed that your MySQL credentials are stored at
 `~/.mysql/credentials` in the `psiz` block (see README). If
@@ -80,8 +80,8 @@ def extract_observations(
         grade_mode (optional): The grade mode to use when grading catch trials.
             See psiz.preprocessing.grade_catch_trials for details
             regarding the accepted inputs.
-        grade_threshold (optional): The grading threshold to use for determining
-            if an assignment should be accepted or dropped.
+        grade_threshold (optional): The grading threshold to use for
+            determining if an assignment should be accepted or dropped.
         verbose (optional): Verbosity of output.
 
     """

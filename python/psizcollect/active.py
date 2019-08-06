@@ -112,7 +112,7 @@ def check_if_sufficient_data(compute_node, active_spec, verbose=0):
                     "  Need {0} more totoal protocols.".format(needed_total)
                 )
 
-    return is_sufficient
+    return is_sufficient, needed_total
 
 
 def update_step(compute_node, host_node, project_id, active_spec, verbose=0):
@@ -124,18 +124,11 @@ def update_step(compute_node, host_node, project_id, active_spec, verbose=0):
 
     fp_active = Path(compute_node["active"])
 
+    # Current assets.
     fp_current = fp_active / Path("current")
-    fp_samples = fp_current / Path('samples.p')
-    fp_docket = fp_current / Path('docket.hdf5')
-    fp_ig = fp_current / Path('ig_info.p')
-
-    fp_archive = fp_active / Path("archive")
-
     if not fp_current.exists():
         fp_current.mkdir(parents=True)
-
-    if not fp_archive.exists():
-        fp_archive.mkdir(parents=True)
+    fp_docket = fp_current / Path('docket.hdf5')
 
     catalog = psiz.datasets.load_catalog(fp_catalog)
     obs = psiz.trials.load_trials(fp_obs)
@@ -143,6 +136,17 @@ def update_step(compute_node, host_node, project_id, active_spec, verbose=0):
     current_round = get_current_round(fp_active, verbose=0)
     current_round = current_round + 1
     print("    Current round: {0}".format(current_round))
+
+    # Archive assets.
+    fp_archive = fp_active / Path("archive")
+    if not fp_archive.exists():
+        fp_archive.mkdir(parents=True)
+    fp_samples_archive = fp_archive / Path('samples_{0}.p'.format(
+        current_round
+    ))
+    fp_ig_archive = fp_archive / Path("ig_info_{0}.p".format(
+        current_round
+    ))
 
     # Update embedding.
     emb = update_embedding(
@@ -152,13 +156,13 @@ def update_step(compute_node, host_node, project_id, active_spec, verbose=0):
 
     # Update samples.
     samples = emb.posterior_samples(
-            obs, n_final_sample=1000, n_burn=100, thin_step=10
+            obs, n_final_sample=1000, n_burn=100, thin_step=10, verbose=1
     )
-    pickle.dump(samples, open(fp_samples, "wb"))
+    pickle.dump(samples, open(fp_samples_archive, "wb"))
 
     # fp_emb = fp_current / Path('emb.hdf5')  # TODO
     # emb = psiz.models.load_embedding(fp_emb)  # TODO
-    # samples = pickle.load(open(fp_samples, "rb"))  # TODO
+    # samples = pickle.load(open(fp_samples_archive, "rb"))  # TODO
 
     # Select docket using active selection.
     n_real_trial = pzc_utils.count_real_trials(active_spec["protocol"])
@@ -169,14 +173,11 @@ def update_step(compute_node, host_node, project_id, active_spec, verbose=0):
     active_docket, ig_info = active_gen.generate(
         n_total_trial, emb, samples, verbose=1
     )
-    fp_ig_archive = fp_active / Path("archive", "ig_info_{0}.p".format(
-        current_round
-    ))
-    pickle.dump(ig_info, open(fp_ig_archive, "wb"))
     active_docket.save(fp_docket)
-    pickle.dump(ig_info, open(fp_ig, "wb"))
+    pickle.dump(ig_info, open(fp_ig_archive, "wb"))
+
     # active_docket = trials.load_trials(fp_docket)  # TODO
-    # ig_info = pickle.load(open(fp_ig, "rb"))  # TODO
+    # ig_info = pickle.load(open(fp_ig_archive, "rb"))  # TODO
 
     # TODO move to separate function.
     # Generate a random docket of trials for comparison.
@@ -237,7 +238,12 @@ def update_embedding(
     # Settings.
     fp_log = fp_active / Path('log.txt')
     fp_emb = fp_active / Path('current', 'emb.hdf5')
-    fp_dim_summary = fp_active / Path('current', 'dim_summary.hdf5')
+    fp_emb_archive = fp_active / Path(
+        'archive', 'emb', 'emb_{0}.hdf5'.format(current_round)
+    )
+    fp_dim_summary = fp_active / Path(
+        'archive', 'dim', 'dim_summary_{0}.hdf5'.format(current_round)
+    )
 
     # Load last embedding or initialize to default.
     if current_round is 0:
@@ -274,6 +280,7 @@ def update_embedding(
         obs, n_restart=300, init_mode='cold', verbose=3
     )
     emb.save(fp_emb)
+    emb.save(fp_emb_archive)
 
     # Log the dimensionality and loss.
     f = open(fp_log, "a")
