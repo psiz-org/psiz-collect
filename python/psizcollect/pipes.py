@@ -90,7 +90,7 @@ def write_metadata(meta, fp_meta):
         fp_meta: The file path of the metadata file.
 
     """
-    df.to_csv(fp_meta, index=False)
+    meta.to_csv(fp_meta, index=False)
 
 
 def write_summary(obs, meta, fp_summary):

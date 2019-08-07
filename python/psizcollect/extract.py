@@ -21,8 +21,6 @@ It is assumed that your MySQL credentials are stored at
 they are stored somewhere else, with a different format, the variable
 `fp_mysql_credentials`, `host`, `user`,`passwd`, and `db` need to be
 changed.
-
-# TODO reduce redundancy, only add obs to existing obs
 """
 
 import argparse
@@ -47,8 +45,8 @@ N_MAX_REF = 8
 
 
 def extract_observations(
-        project_id, grade_mode="lenient", grade_threshold=.8, remake=False,
-        verbose=0):
+        project_id, grade_mode="lenient", grade_threshold=.8,
+        use_preexist=True, verbose=0):
     """Extract and process observations from MySQL database.
 
     Data stored in a MySQL database is extracted and processed into
@@ -84,11 +82,12 @@ def extract_observations(
             regarding the accepted inputs.
         grade_threshold (optional): The grading threshold to use for
             determining if an assignment should be accepted or dropped.
-        remake (optional): Remake entire observations object from
-            scratch.
+        use_preexist (optional): Append new observations to pre-existing
+            data. Otherwise remake observations object from scratch.
         verbose (optional): Verbosity of output.
 
     """
+    is_new_data = True
     fp_mysql_credentials = Path.home() / Path('.mysql/credentials')
     fp_app = Path.home() / Path('.psiz-collect')
 
@@ -111,39 +110,59 @@ def extract_observations(
     )
 
     # Retrieve assignment_id's of all participants in the database.
-    tbl_assignment = fetch_assignment(my_cxn, project_id)
+    df_assignment = fetch_assignment(my_cxn, project_id)
 
-    if remake:
-        max_agent_id = 0
+    obs_pre = None
+    meta_pre = None
+    max_agent_id = 0
+    if use_preexist:
+        # Load pre-existing observations and metadata.
+        try:
+            obs_pre = psiz.trials.load_trials(fp_obs)
+            meta_pre = pd.read_csv(fp_meta)
+            max_agent_id = np.max(obs_pre.agent_id)
+            df_assignment = filter_assignment(df_assignment, meta_pre)
+        except Exception:
+            pass
+
+    # Create psiz.trials.Observations object.
+    if len(df_assignment.index) > 0:
+        obs, meta = assemble_accepted_obs(
+            my_cxn, df_assignment, grade_mode, grade_threshold, max_agent_id
+        )
     else:
-        # Load obs and metadata.
-        obs_pre = psiz.trials.load_trials(fp_obs)
-        meta_pre = pd.read_csv(fp_meta)
-
-        max_agent_id = np.max(obs_pre.agent_id)
-        # Cut tbl_assignment down to new entries.
-        assignment_id_set_pre = set(pd.unique(meta_pre['assignment_id'].values))
-        assignmnet_id_set = set(pd.unique(tbl_assignment['assignment_id']))
-        assignmnet_id_set_diff = assignmnet_id_set - assignment_id_set_pre
-        print(assignmnet_id_set_diff)  # TODO
-
-    # Create psiz.trials.Observations object. TODO
-    # obs, meta = assemble_accepted_obs(
-    #     my_cxn, tbl_assignment, grade_mode, grade_threshold, max_agent_id
-    # )
+        is_new_data = False
 
     # Close the MySQL connection.
     my_cxn.close()
 
-    if not remake:
-        # Combine new data with pre-existing data.
-        obs = psiz.trials.stack((obs_pre, obs))
-        meta = pd.concat([meta_pre, meta], ignore_index=True)
+    if is_new_data:
+        if obs_pre is not None:
+            # Combine new data with pre-existing data.
+            obs = psiz.trials.stack((obs_pre, obs))
+            meta = pd.concat([meta_pre, meta], ignore_index=True)
 
-    # Save observations, metadata, and summary. TODO
-    # obs.save(fp_obs)
-    # psizcollect.pipes.write_metadata(meta, fp_meta)
-    # psizcollect.pipes.write_summary(obs, meta, fp_summary)
+        # Save observations, metadata, and summary.
+        obs.save(fp_obs)
+        psizcollect.pipes.write_metadata(meta, fp_meta)
+        psizcollect.pipes.write_summary(obs, meta, fp_summary)
+
+
+def filter_assignment(df_assignment, meta_pre):
+    """Filter assignments down to new assignments not in metadata."""
+    assignment_id_set_pre = meta_pre['assignment_id'].values
+    assignmnet_id_set = df_assignment['assignment_id'].values
+    # Identify new assignment IDs
+    assignment_id_set_new = np.setdiff1d(
+        assignmnet_id_set, assignment_id_set_pre, assume_unique=False
+    )
+    locs = np.zeros([len(df_assignment.index)], dtype=bool)
+    for assignment_id_new in assignment_id_set_new:
+        locs = np.logical_or(
+            locs, np.equal(assignmnet_id_set, assignment_id_new)
+        )
+    df_assignment = df_assignment[locs]
+    return df_assignment
 
 
 def fetch_assignment(my_cxn, project_id):
@@ -154,8 +173,8 @@ def fetch_assignment(my_cxn, project_id):
         project_id: The requested project ID.
 
     Returns:
-        tbl_assignment: All of the assignment table information
-            organized as a dictionary.
+        df_assignment: All of the assignment table information
+            organized as a pandas.DataFrame.
 
     """
     query_assignment = (
@@ -192,7 +211,7 @@ def fetch_assignment(my_cxn, project_id):
             duration_datetime.total_seconds() / 60.
         )
 
-    tbl_assignment = {
+    dict_assignment = {
         "assignment_id": np.asarray(assignment_id_list),
         "protocol_id": np.asarray(protocol_id_list),
         "worker_id": np.asarray(worker_id_list),
@@ -201,16 +220,17 @@ def fetch_assignment(my_cxn, project_id):
         "end_hit": end_hit,
         "duration_hit_min": np.asarray(duration_hit_min)
     }
-    return tbl_assignment
+    df_assignment = pd.DataFrame.from_dict(dict_assignment)
+    return df_assignment
 
 
 def assemble_accepted_obs(
-        my_cxn, tbl_assignment, grade_mode, grade_thresh, max_agent_id):
+        my_cxn, df_assignment, grade_mode, grade_thresh, max_agent_id):
     """Create Observations object for accepted data.
 
     Arguments:
         my_cxn: A connection to a MySQL database.
-        tbl_assignment: A dictionary representing information in the
+        df_assignment: A dictionary representing information in the
             assignment table.
         grade_mode: The mode of grading to use.
         grade_thresh: The threshold to use for dropping an assignment.
@@ -223,19 +243,19 @@ def assemble_accepted_obs(
             observations.
 
     """
-    n_assignment = len(tbl_assignment["assignment_id"])
+    n_assignment = len(df_assignment["assignment_id"].values)
 
-    worker_list = pd.unique(tbl_assignment["worker_id"])
+    worker_list = pd.unique(df_assignment["worker_id"].values)
     agent_id_list = np.arange(len(worker_list)) + max_agent_id
 
     # Initialize.
     obs = None
     dict_meta = {
-        'assignment_id': tbl_assignment['assignment_id'],
+        'assignment_id': df_assignment['assignment_id'].values,
         'agent_id': np.zeros([n_assignment], dtype=int),
-        'protocol_id': tbl_assignment['protocol_id'],
-        'status_code': tbl_assignment['status_code'],
-        'duration_hit_min': tbl_assignment['duration_hit_min'],
+        'protocol_id': df_assignment['protocol_id'].values,
+        'status_code': df_assignment['status_code'].values,
+        'duration_hit_min': df_assignment['duration_hit_min'].values,
         'avg_trial_rt': np.zeros([n_assignment]),
         'n_trial': np.zeros([n_assignment], dtype=int),
         'n_catch': np.zeros([n_assignment], dtype=int),
@@ -262,7 +282,7 @@ def assemble_accepted_obs(
 
         if n_trial > 0:
             agent_id = agent_id_list[np.equal(
-                tbl_assignment["worker_id"][idx], worker_list
+                df_assignment["worker_id"].values[idx], worker_list
             )]
             dict_meta['agent_id'][idx] = agent_id
             obs_agent = create_obs_agent(sql_result, agent_id)
