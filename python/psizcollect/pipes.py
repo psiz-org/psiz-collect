@@ -90,7 +90,6 @@ def write_metadata(meta, fp_meta):
         fp_meta: The file path of the metadata file.
 
     """
-    df = pd.DataFrame.from_dict(meta)
     df.to_csv(fp_meta, index=False)
 
 
@@ -99,7 +98,8 @@ def write_summary(obs, meta, fp_summary):
 
     Arguments:
         obs: A psiz.trials.Observations object.
-        meta: Metadata for the observations.
+        meta: A pandas.DataFrame object containing metadata for the
+            observations.
         fp_summary: The file path of the summary file.
 
     """
@@ -131,22 +131,23 @@ def assignment_summary(obs, meta):
 
     Arguments:
         obs: psiz.trials.Observations object.
-        meta: The metadata.
+        meta: A pandas.DataFrame object containing metadata for the
+            observations.
 
     Returns:
         msg: A string containing an appropriately formated summary.
 
     """
     msg = "Assignments\n"
-    locs_accepted = np.equal(meta['status_code'], STATUS_ACCEPTED)
-    locs_dropped = np.equal(meta['status_code'], STATUS_DROPPED)
+    locs_accepted = np.equal(meta['status_code'].values, STATUS_ACCEPTED)
+    locs_dropped = np.equal(meta['status_code'].values, STATUS_DROPPED)
     locs_completed = np.sum(np.logical_or(
         locs_accepted, locs_dropped
     ))
-    grade_accepted = meta['grade'][locs_accepted]
-    duration_accepted = meta['duration_hit_min'][locs_accepted]
-    grade_dropped = meta['grade'][locs_dropped]
-    duration_dropped = meta['duration_hit_min'][locs_dropped]
+    grade_accepted = meta['grade'].values[locs_accepted]
+    duration_accepted = meta['duration_hit_min'].values[locs_accepted]
+    grade_dropped = meta['grade'].values[locs_dropped]
+    duration_dropped = meta['duration_hit_min'].values[locs_dropped]
 
     msg += "              | N    | Grade            | Duration (min)   |\n"
     msg += "              |      | min   med   max  | min   med   max  |\n"
@@ -189,7 +190,8 @@ def observation_summary(obs, meta):
 
     Arguments:
         obs: psiz.trials.Observations object.
-        meta: The metadata.
+        meta: A pandas.DataFrame object containing metadata for the
+            observations.
 
     Returns:
         msg: A string containing an appropriately formated summary.
@@ -215,7 +217,8 @@ def protocol_summary(obs, meta):
 
     Arguments:
         obs: psiz.trials.Observations object.
-        meta: The metadata.
+        meta: A pandas.DataFrame object containing metadata for the
+            observations.
 
     Returns:
         msg: A string containing an appropriately formated summary.
@@ -225,15 +228,15 @@ def protocol_summary(obs, meta):
     n_last = 5
 
     locs_completed = np.logical_or(
-        np.equal(meta["status_code"], STATUS_ACCEPTED),
-        np.equal(meta["status_code"], STATUS_DROPPED)
+        np.equal(meta["status_code"].values, STATUS_ACCEPTED),
+        np.equal(meta["status_code"].values, STATUS_DROPPED)
     )
-    locs_accepted = np.equal(meta["status_code"], STATUS_ACCEPTED)
+    locs_accepted = np.equal(meta["status_code"].values, STATUS_ACCEPTED)
 
-    uniq_completed_list = pd.unique(meta["protocol_id"][locs_completed])
+    uniq_completed_list = pd.unique(meta["protocol_id"].values[locs_completed])
     n_uniq_completed = len(uniq_completed_list)
 
-    uniq_accepted_list = pd.unique(meta["protocol_id"][locs_accepted])
+    uniq_accepted_list = pd.unique(meta["protocol_id"].values[locs_accepted])
     n_uniq_accepted = len(uniq_accepted_list)
 
     msg = "Protocols\n"
@@ -253,7 +256,7 @@ def protocol_summary(obs, meta):
     for idx in np.arange(n_start, n_uniq_accepted):
         i_protocol = uniq_accepted_list[idx]
         n_curr_protocol = 0
-        for j_protocol in meta["protocol_id"][locs_accepted]:
+        for j_protocol in meta["protocol_id"].values[locs_accepted]:
             if i_protocol == j_protocol:
                 n_curr_protocol = n_curr_protocol + 1
         msg += "      | {0: <2} | {1}\n".format(
@@ -268,7 +271,8 @@ def warning_summary(obs, meta):
 
     Arguments:
         obs: psiz.trials.Observations object.
-        meta: The metadata.
+        meta: A pandas.DataFrame object containing metadata for the
+            observations.
 
     Returns:
         msg: A string containing an appropriately formated summary.
@@ -276,10 +280,10 @@ def warning_summary(obs, meta):
     """
     msg = ''
     wrn_count = 0
-    for idx, assignment_id in enumerate(meta["assignment_id"]):
+    for idx, assignment_id in enumerate(meta["assignment_id"].values):
         if (
-            meta["status_code"][idx] == STATUS_ACCEPTED and
-            meta["n_trial"][idx] == 0
+            meta["status_code"].values[idx] == STATUS_ACCEPTED and
+            meta["n_trial"].values[idx] == 0
         ):
             msg += (
                 '    assignment_id={0} | '
@@ -288,10 +292,10 @@ def warning_summary(obs, meta):
             wrn_count += 1
         if (
             (
-                meta["status_code"][idx] != STATUS_ACCEPTED and
-                meta["status_code"][idx] != STATUS_DROPPED
+                meta["status_code"].values[idx] != STATUS_ACCEPTED and
+                meta["status_code"].values[idx] != STATUS_DROPPED
             ) and
-            meta["n_trial"][idx] > 0
+            meta["n_trial"].values[idx] > 0
         ):
             msg += (
                 '    assignment_id={0} | '

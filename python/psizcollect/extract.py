@@ -22,6 +22,7 @@ they are stored somewhere else, with a different format, the variable
 `fp_mysql_credentials`, `host`, `user`,`passwd`, and `db` need to be
 changed.
 
+# TODO reduce redundancy, only add obs to existing obs
 """
 
 import argparse
@@ -46,7 +47,8 @@ N_MAX_REF = 8
 
 
 def extract_observations(
-        project_id, grade_mode="lenient", grade_threshold=.8, verbose=0):
+        project_id, grade_mode="lenient", grade_threshold=.8, remake=False,
+        verbose=0):
     """Extract and process observations from MySQL database.
 
     Data stored in a MySQL database is extracted and processed into
@@ -82,6 +84,8 @@ def extract_observations(
             regarding the accepted inputs.
         grade_threshold (optional): The grading threshold to use for
             determining if an assignment should be accepted or dropped.
+        remake (optional): Remake entire observations object from
+            scratch.
         verbose (optional): Verbosity of output.
 
     """
@@ -109,24 +113,44 @@ def extract_observations(
     # Retrieve assignment_id's of all participants in the database.
     tbl_assignment = fetch_assignment(my_cxn, project_id)
 
-    # Create psiz.trials.Observations object.
-    obs, meta = assemble_accepted_obs(
-        my_cxn, tbl_assignment, grade_mode, grade_threshold
-    )
-    # Close the connection.
+    if remake:
+        max_agent_id = 0
+    else:
+        # Load obs and metadata.
+        obs_pre = psiz.trials.load_trials(fp_obs)
+        meta_pre = pd.read_csv(fp_meta)
+
+        max_agent_id = np.max(obs_pre.agent_id)
+        # Cut tbl_assignment down to new entries.
+        assignment_id_set_pre = set(pd.unique(meta_pre['assignment_id'].values))
+        assignmnet_id_set = set(pd.unique(tbl_assignment['assignment_id']))
+        assignmnet_id_set_diff = assignmnet_id_set - assignment_id_set_pre
+        print(assignmnet_id_set_diff)  # TODO
+
+    # Create psiz.trials.Observations object. TODO
+    # obs, meta = assemble_accepted_obs(
+    #     my_cxn, tbl_assignment, grade_mode, grade_threshold, max_agent_id
+    # )
+
+    # Close the MySQL connection.
     my_cxn.close()
 
-    # Save observations, metadata, and summary.
-    obs.save(fp_obs)
-    psizcollect.pipes.write_metadata(meta, fp_meta)
-    psizcollect.pipes.write_summary(obs, meta, fp_summary)
+    if not remake:
+        # Combine new data with pre-existing data.
+        obs = psiz.trials.stack((obs_pre, obs))
+        meta = pd.concat([meta_pre, meta], ignore_index=True)
+
+    # Save observations, metadata, and summary. TODO
+    # obs.save(fp_obs)
+    # psizcollect.pipes.write_metadata(meta, fp_meta)
+    # psizcollect.pipes.write_summary(obs, meta, fp_summary)
 
 
 def fetch_assignment(my_cxn, project_id):
     """Fetch data in assignment table.
 
     Arguments:
-        my_cursor: A MySQL cursor.
+        my_cxn: A connection to a MySQL database.
         project_id: The requested project ID.
 
     Returns:
@@ -181,21 +205,32 @@ def fetch_assignment(my_cxn, project_id):
 
 
 def assemble_accepted_obs(
-        my_cxn, tbl_assignment, grade_mode, grade_thresh):
+        my_cxn, tbl_assignment, grade_mode, grade_thresh, max_agent_id):
     """Create Observations object for accepted data.
 
     Arguments:
-        my_cxn: A MySQL connection.
-        assignment_id_list: A list of database assignment_id's.
+        my_cxn: A connection to a MySQL database.
+        tbl_assignment: A dictionary representing information in the
+            assignment table.
+        grade_mode: The mode of grading to use.
+        grade_thresh: The threshold to use for dropping an assignment.
+        max_agent_id: Integer indicating the maximum existing agent ID.
+            All new agent IDs must be greater than this integer.
+
+    Returns:
+        obs: An psiz.trials.Observations object.
+        df_meta: A companion dataframe containing metadata about the
+            observations.
+
     """
     n_assignment = len(tbl_assignment["assignment_id"])
 
     worker_list = pd.unique(tbl_assignment["worker_id"])
-    agent_id_list = np.arange(len(worker_list))
+    agent_id_list = np.arange(len(worker_list)) + max_agent_id
 
     # Initialize.
     obs = None
-    meta = {
+    dict_meta = {
         'assignment_id': tbl_assignment['assignment_id'],
         'agent_id': np.zeros([n_assignment], dtype=int),
         'protocol_id': tbl_assignment['protocol_id'],
@@ -216,7 +251,7 @@ def assemble_accepted_obs(
         "FROM trial WHERE assignment_id=%s"
     )
 
-    for idx, assignment_id in enumerate(meta["assignment_id"]):
+    for idx, assignment_id in enumerate(dict_meta["assignment_id"]):
         vals = (int(assignment_id),)
         my_cursor = my_cxn.cursor()
         my_cursor.execute(query_trial, vals)
@@ -229,39 +264,40 @@ def assemble_accepted_obs(
             agent_id = agent_id_list[np.equal(
                 tbl_assignment["worker_id"][idx], worker_list
             )]
-            meta['agent_id'][idx] = agent_id
+            dict_meta['agent_id'][idx] = agent_id
             obs_agent = create_obs_agent(sql_result, agent_id)
-            meta['avg_trial_rt'][idx] = np.mean(obs_agent.rt_ms)
-            meta['n_trial'][idx] = n_trial
+            dict_meta['avg_trial_rt'][idx] = np.mean(obs_agent.rt_ms)
+            dict_meta['n_trial'][idx] = n_trial
             (avg_grade, _, is_catch) = (
                 psiz.preprocess.grade_catch_trials(
                     obs_agent, grade_mode=grade_mode
                 )
             )
-            meta['n_catch'][idx] = np.sum(is_catch)
-            meta['grade'][idx] = avg_grade
+            dict_meta['n_catch'][idx] = np.sum(is_catch)
+            dict_meta['grade'][idx] = avg_grade
 
             # Accept or drop.
             if (
-                meta['status_code'][idx] == STATUS_ACCEPTED or
-                meta['status_code'][idx] == STATUS_DROPPED
+                dict_meta['status_code'][idx] == STATUS_ACCEPTED or
+                dict_meta['status_code'][idx] == STATUS_DROPPED
             ):
                 if avg_grade < grade_thresh:
-                    meta['is_accepted'][idx] = False
+                    dict_meta['is_accepted'][idx] = False
                     update_status(my_cxn, assignment_id, STATUS_DROPPED)
-                    meta['status_code'][idx] = STATUS_DROPPED
+                    dict_meta['status_code'][idx] = STATUS_DROPPED
                 else:
-                    meta['is_accepted'][idx] = True
+                    dict_meta['is_accepted'][idx] = True
                     # update_status(my_cxn, assignment_id, STATUS_ACCEPTED)
-                    meta['status_code'][idx] = STATUS_ACCEPTED
+                    dict_meta['status_code'][idx] = STATUS_ACCEPTED
                     if obs is None:
                         obs = obs_agent
                     else:
                         obs = psiz.trials.stack((obs, obs_agent))
 
     obs = psiz.preprocess.remove_catch_trials(obs)
+    df_meta = pd.DataFrame.from_dict(dict_meta)
 
-    return obs, meta
+    return obs, df_meta
 
 
 def create_obs_agent(sql_result, agent_id):
@@ -309,7 +345,7 @@ def update_status(my_cxn, assignment_id, status_code):
     """Update the status code for a particular assignment.
 
     Arguments:
-        my_cursor: A MySQL cursor.
+        my_cxn: A connection to a MySQL database.
         assignment_id: The assignment to update.
         status_code: The status code to apply.
     """
