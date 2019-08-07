@@ -248,15 +248,11 @@ def assemble_accepted_obs(
             ):
                 if avg_grade < grade_thresh:
                     meta['is_accepted'][idx] = False
-                    # psizcollect.pipes.update_status(
-                    #     my_cxn, assignment_id, STATUS_DROPPED
-                    # ) TODO
+                    update_status(my_cxn, assignment_id, STATUS_DROPPED)
                     meta['status_code'][idx] = STATUS_DROPPED
                 else:
                     meta['is_accepted'][idx] = True
-                    # psizcollect.pipes.update_status(
-                    #     my_cxn, assignment_id, STATUS_ACCEPTED
-                    # ) TODO
+                    # update_status(my_cxn, assignment_id, STATUS_ACCEPTED)
                     meta['status_code'][idx] = STATUS_ACCEPTED
                     if obs is None:
                         obs = obs_agent
@@ -317,15 +313,18 @@ def update_status(my_cxn, assignment_id, status_code):
         assignment_id: The assignment to update.
         status_code: The status code to apply.
     """
+    # query = (
+    #     "SELECT status_code FROM assignment WHERE assignment_id={1:d}"
+    # ).format(assignment_id)
     query = (
         "UPDATE assignment SET status_code={0:d} WHERE assignment_id={1:d}"
     ).format(status_code, assignment_id)
     my_cursor = my_cxn.cursor()
     my_cursor.execute(query)
     my_cxn.commit()
-    print(
-        '      SET status_code={0:d} | {1} row(s) affected'.format(
-            status_code, my_cursor.rowcount
-        )
-    )  # TODO
+    # print(
+    #     '      SET status_code={0:d} | {1} row(s) affected'.format(
+    #         status_code, my_cursor.rowcount
+    #     )
+    # )
     my_cursor.close()

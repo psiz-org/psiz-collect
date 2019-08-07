@@ -101,6 +101,11 @@ def check_if_sufficient_data(compute_node, active_spec, verbose=0):
     if verbose > 0:
         if is_sufficient:
             print("There is sufficient data to generate new trials.")
+            print(
+                'There are {0} assignments for the current round.'.format(
+                    current_total
+                )
+            )
         else:
             print("There is insufficient data to generate new trials.")
             if needed_unique > 0:
@@ -109,10 +114,10 @@ def check_if_sufficient_data(compute_node, active_spec, verbose=0):
                 )
             if needed_total > 0:
                 print(
-                    "  Need {0} more totoal protocols.".format(needed_total)
+                    "  Need {0} more total protocols.".format(needed_total)
                 )
 
-    return is_sufficient, needed_total
+    return is_sufficient, current_total
 
 
 def update_step(compute_node, host_node, project_id, active_spec, verbose=0):
@@ -269,7 +274,7 @@ def update_embedding(
     if n_dim_best == n_dim_last:
         # Finetune existing embedding.
         loss_train, loss_val = emb.fit(
-            obs, n_restart=10, init_mode="hot", verbose=3
+            obs, n_restart=10, init_mode="hot", verbose=2
         )
     else:
         # Initialize new embedding with changed dimensionality.
@@ -277,7 +282,7 @@ def update_embedding(
 
     # Infer new embedding using cold restarts.
     loss_train, loss_val = emb.fit(
-        obs, n_restart=300, init_mode='cold', verbose=3
+        obs, n_restart=300, init_mode='cold', verbose=2
     )
     emb.save(fp_emb)
     emb.save(fp_emb_archive)
