@@ -16,6 +16,9 @@
 
 """Module for handling Amazon Mechanical Turk HITs.
 
+It is assumed that credentials are stored in the [<aws_profile>]
+section of ~/.aws/credentials.
+
 Functions:
     create_hit_on_host:
     create_hit:
@@ -72,32 +75,25 @@ def create_hit(
         is_live:
         fp_log:
     """
-    if (n_assignment > 0) and (n_assignment <= 9):  # TODO Temporary check.
+    if (n_assignment > 0) and (n_assignment <= 9):  # TODO safety check.
         # Load AMT configuration file.
         with open(fp_hit_config) as f:
             hit_cfg = json.load(f)
 
+        # Set path for HIT log.
         if fp_log is None:
-            fp_log = Path.home() / Path('.amt-voucher', 'logs', aws_profile)
-        # Create log directories if necessary.
-        if not fp_log.exists():
-            fp_log.mkdir(parents=True)
+            fp_log = Path.home() / Path('.amt-voucher', 'logs')
+        else:
+            fp_log = Path(fp_log)  # TODO check if exists.
 
-        ymd_str = datetime.datetime.today().strftime('%Y-%m-%d')
-
-        # Start client.
+        # Create AMT client.
         session = boto3.Session(profile_name=aws_profile)
-        # Any clients created from this session will use credentials
-        # from the [<aws_profile>] section of ~/.aws/credentials.
+        amt_client = session.client(
+            'mturk', endpoint_url=get_endpoint_url(is_live)
+        )
 
-        endpoint_url = 'https://mturk-requester-sandbox.us-east-1.amazonaws.com'
-        if is_live:
-            endpoint_url = 'https://mturk-requester.us-east-1.amazonaws.com'
-        amt_client = session.client('mturk', endpoint_url=endpoint_url)
-
-        # Create question XML.
+        # Create the HIT.
         question_xml = external_question_xml(hit_cfg['QuestionUrl'])
-
         response = amt_client.create_hit(
             MaxAssignments=n_assignment,
             # AutoApprovalDelayInSeconds=123,
@@ -157,28 +153,22 @@ def create_hit(
             #     },
             # ]
         )
-        hitId = response['HIT']['HITId']
+        hit_id = response['HIT']['HITId']
 
-        if is_live:
-            with open(fp_log / Path('hit_live.txt'), 'a') as f:
-                f.write(
-                    "{0}, {1}, {2}\n".format(hitId, ymd_str, fp_hit_config)
-                )
-            if verbose > 0:
+        # Record the creation of the HIT.
+        write_to_log(fp_log, aws_profile, is_live, hit_id, fp_hit_config)
+
+        if verbose > 0:
+            if is_live:
                 print(
                     "    Created live HIT {0}: {1} assignment(s)".format(
-                        hitId, n_assignment
+                        hit_id, n_assignment
                     )
                 )
-        else:
-            with open(fp_log / Path('hit_sandbox.txt'), 'a') as f:
-                f.write(
-                    "{0}, {1}, {2}\n".format(hitId, ymd_str, fp_hit_config)
-                )
-            if verbose > 0:
+            else:
                 print(
                     "    Created sandbox HIT {0}: {1} assignment(s)".format(
-                        hitId, n_assignment
+                        hit_id, n_assignment
                     )
                 )
     else:
@@ -202,13 +192,47 @@ def external_question_xml(question_url):
     return question_xml
 
 
+def write_to_log(
+        fp_log, aws_profile, is_live, hit_id, fp_hit_config):
+    """Record HIT creation in log.
+
+    Creating an entry adds a row to the appopriate log file. Each row
+    indicates the HIT ID, time of creation (YYYY-MM-DD), and name of
+    the configuration file.
+
+    Arguments:
+        fp_log:
+        aws_profile:
+        is_live:
+        hit_id:
+        fp_hit_config:
+    """
+    fp_log_profile = fp_log / Path(aws_profile)
+    # Create log directories if necessary.
+    if not fp_log_profile.exists():
+        fp_log_profile.mkdir(parents=True)
+
+    ymd_str = datetime.datetime.today().strftime('%Y-%m-%d')
+
+    if is_live:
+        with open(fp_log / Path(aws_profile, 'hit_live.txt'), 'a') as f:
+            f.write(
+                "{0}, {1}, {2}\n".format(hit_id, ymd_str, fp_hit_config)
+            )
+    else:
+        with open(fp_log / Path(aws_profile, 'hit_sandbox.txt'), 'a') as f:
+            f.write(
+                "{0}, {1}, {2}\n".format(hit_id, ymd_str, fp_hit_config)
+            )
+
+
 def check_for_outstanding_assignments(
-        aws_profile, is_live, is_all=False, verbose=0):
+        aws_profile, is_live, fp_log, is_all=False, verbose=0):
     """Check for HITs that are not done.
 
     Check for pending or available assignments.
     """
-    fp_log = Path('/Users/bdroads/Projects/psiz-projects/imagenet/hits')  # TODO
+    fp_log = Path(fp_log)
     fp_hit_log = get_hit_log(fp_log, aws_profile, is_live)
 
     if verbose > 0:
@@ -284,16 +308,6 @@ def hit_needs_approval(hit_info):
     needs_approval = False
     if hit_info['n_waiting'] > 0:
         needs_approval = True
-    # n_submitted = hit_info['n_complete'] + hit_info['n_waiting']
-    # if hit_info['is_expired']:
-    #     if (hit_info['n_complete'] + hit_info['n_available']) != hit_info['n_max']:
-    #         needs_approval = True
-    # else:
-    #     if (
-    #         hit_info['n_complete'] + hit_info['n_pending'] +
-    #         hit_info['n_available']
-    #     ) != hit_info['n_max']:
-    #         needs_approval = True
     return needs_approval
 
 
@@ -329,7 +343,9 @@ def get_endpoint_url(is_live):
     if is_live:
         endpoint_url = 'https://mturk-requester.us-east-1.amazonaws.com'
     else:
-        endpoint_url = 'https://mturk-requester-sandbox.us-east-1.amazonaws.com'
+        endpoint_url = (
+            'https://mturk-requester-sandbox.us-east-1.amazonaws.com'
+        )
     return endpoint_url
 
 
