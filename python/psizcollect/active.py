@@ -16,11 +16,21 @@
 
 """Active module.
 
-Tools for performing active selection.
+Tools for performing active learning. These tools assume a particular
+directory structure in order to work.
 
-These tools assume a particular directory structure in order to work.
+Functions:
+    get_current_round:
+    update_andor_request:
+    check_if_sufficient_data:
+    check_if_under_budget:
+    update_step:
+    update_embedding:
+    plot_ig_summary:
+
 """
 
+import datetime
 import json
 import os
 from pathlib import Path
@@ -35,6 +45,7 @@ import psiz.datasets
 import psiz.dimensionality
 import psiz.generator
 import psiz.models
+import psizcollect.amt
 import psizcollect.pipes as pzc_pipes
 import psizcollect.utils as pzc_utils
 
@@ -67,6 +78,54 @@ def get_current_round(fp_active, verbose=0):
         print('    Current round: {0}'.format(current_round))
 
     return current_round
+
+
+def update_andor_request(
+        compute_node, host_node, project_id, active_spec, amt_spec):
+    """Update the round and/or request more observations.
+
+    Before requesting more observations, the budget is checked.
+
+    Arguments:
+        compute_node:
+        host_node:
+        project_id:
+        active_spec:
+        amt_spec:
+    """
+    # Check if there is sufficient data.
+    is_sufficient, current_total = check_if_sufficient_data(
+        compute_node, active_spec, verbose=1
+    )
+
+    if is_sufficient:
+        update_step(
+            compute_node, host_node, project_id, active_spec
+        )
+        n_assignment = active_spec['nAssignment']
+    else:
+        n_assignment = np.maximum(
+            0, active_spec['nAssignment'] - current_total
+        )
+
+    # Check budget.
+    is_under_budget = check_if_under_budget(amt_spec['budget'])\
+    # Check time.
+    is_appropriate_time = psizcollect.amt.check_time(amt_spec['utcForbidden'])
+
+    if is_under_budget and is_appropriate_time:
+        # Can create HIT.
+        print('Creating a HIT with {0} assignment(s).'.format(n_assignment))
+        psizcollect.amt.create_hit_on_host(
+            host_node, amt_spec['profile'], is_live=True,
+            n_assignment=n_assignment, verbose=1
+        )
+    else:
+        print('HIT cannot be created.')
+        if not is_under_budget:
+            print('  Insufficient budget.')
+        if not is_appropriate_time:
+            print('  Outside allowed time.')
 
 
 def check_if_sufficient_data(compute_node, active_spec, verbose=0):
@@ -124,6 +183,12 @@ def check_if_sufficient_data(compute_node, active_spec, verbose=0):
                 )
 
     return is_sufficient, current_total
+
+
+def check_if_under_budget(budget):
+    """Check that the project is still under budget."""
+    is_under_budget = True  # TODO
+    return is_under_budget
 
 
 def update_step(compute_node, host_node, project_id, active_spec, verbose=0):

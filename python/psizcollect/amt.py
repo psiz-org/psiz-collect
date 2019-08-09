@@ -28,6 +28,7 @@ import json
 from pathlib import Path
 
 import boto3
+import numpy as np
 import paramiko
 
 
@@ -71,7 +72,7 @@ def create_hit(
         is_live:
         fp_log:
     """
-    if (n_assignment > 0) and (n_assignment <= 9):  # TODO Temporary safety check.
+    if (n_assignment > 0) and (n_assignment <= 9):  # TODO Temporary check.
         # Load AMT configuration file.
         with open(fp_hit_config) as f:
             hit_cfg = json.load(f)
@@ -389,3 +390,24 @@ def print_mode(is_live):
         print("Mode: LIVE")
     else:
         print("Mode: SANDBOX")
+
+
+def check_time(utc_forbidden):
+    """Check if HIT is allowed to be created at this time.
+
+    Times are assumed to be UTC.
+
+    Arguments:
+        utc_forbidden: A list of UTC hours that indicates times when
+            creating new HITs is forbidden.
+
+    Returns:
+        is_appropriate_time: A boolean indicating if the HIT can be
+            created at this time.
+
+    """
+    is_appropriate_time = False
+    dt_now = datetime.datetime.utcnow()
+    if np.sum(np.equal(dt_now.hour, utc_forbidden)) == 0:
+        is_appropriate_time = True
+    return is_appropriate_time
