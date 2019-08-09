@@ -57,14 +57,14 @@ def get_current_round(fp_active, verbose=0):
 
     if not os.path.isfile(fp_log):
         current_round = 0
-        f = open(fp_log, "a")
-        f.write("round,n_dim,loss_train,loss_val\n")
+        f = open(fp_log, 'a')
+        f.write('round,n_dim,loss_train,loss_val\n')
         f.close()
     else:
         round_history = np.loadtxt(fp_log, delimiter=',', ndmin=2, skiprows=1)
         current_round = int(round_history[-1, 0])
     if verbose > 0:
-        print("    Current round: {0}".format(current_round))
+        print('    Current round: {0}'.format(current_round))
 
     return current_round
 
@@ -73,8 +73,8 @@ def check_if_sufficient_data(compute_node, active_spec, verbose=0):
     """Check if current round of data meets requirements."""
     is_sufficient = True
 
-    fp_assets = Path(compute_node["assets"])
-    fp_active = Path(compute_node["active"])
+    fp_assets = Path(compute_node['assets'])
+    fp_active = Path(compute_node['active'])
     fp_meta = fp_assets / Path('obs', 'meta.txt')
 
     current_round = get_current_round(fp_active, verbose=0)
@@ -100,21 +100,27 @@ def check_if_sufficient_data(compute_node, active_spec, verbose=0):
 
     if verbose > 0:
         if is_sufficient:
-            print("There is sufficient data to generate new trials.")
+            print(
+                'There is sufficient data to generate the next round of'
+                ' protocols.'
+            )
             print(
                 'There are {0} assignments for the current round.'.format(
                     current_total
                 )
             )
         else:
-            print("There is insufficient data to generate new trials.")
+            print(
+                'There is insufficient data to generate the next round of '
+                'protocols.'
+            )
             if needed_unique > 0:
                 print(
-                    "  Need {0} more unique protocols.".format(needed_unique)
+                    '  Need {0} more unique protocols.'.format(needed_unique)
                 )
             if needed_total > 0:
                 print(
-                    "  Need {0} more total protocols.".format(needed_total)
+                    '  Need {0} more total protocols.'.format(needed_total)
                 )
 
     return is_sufficient, current_total
@@ -122,15 +128,15 @@ def check_if_sufficient_data(compute_node, active_spec, verbose=0):
 
 def update_step(compute_node, host_node, project_id, active_spec, verbose=0):
     """Update step of active selection procedure."""
-    fp_assets = Path(compute_node["assets"])
+    fp_assets = Path(compute_node['assets'])
     fp_obs = fp_assets / Path('obs', 'obs.hdf5')
     fp_catalog = fp_assets / Path('catalog.hdf5')
-    fp_payload = Path(compute_node["payload"])
+    fp_payload = Path(compute_node['payload'])
 
-    fp_active = Path(compute_node["active"])
+    fp_active = Path(compute_node['active'])
 
     # Current assets.
-    fp_current = fp_active / Path("current")
+    fp_current = fp_active / Path('current')
     if not fp_current.exists():
         fp_current.mkdir(parents=True)
     fp_docket = fp_current / Path('docket.hdf5')
@@ -140,16 +146,16 @@ def update_step(compute_node, host_node, project_id, active_spec, verbose=0):
 
     current_round = get_current_round(fp_active, verbose=0)
     current_round = current_round + 1
-    print("    Current round: {0}".format(current_round))
+    print('    Current round: {0}'.format(current_round))
 
     # Archive assets.
-    fp_archive = fp_active / Path("archive")
+    fp_archive = fp_active / Path('archive')
     if not fp_archive.exists():
         fp_archive.mkdir(parents=True)
     fp_samples_archive = fp_archive / Path('samples_{0}.p'.format(
         current_round
     ))
-    fp_ig_archive = fp_archive / Path("ig_info_{0}.p".format(
+    fp_ig_archive = fp_archive / Path('ig_info_{0}.p'.format(
         current_round
     ))
 
@@ -163,15 +169,15 @@ def update_step(compute_node, host_node, project_id, active_spec, verbose=0):
     samples = emb.posterior_samples(
             obs, n_final_sample=1000, n_burn=100, thin_step=10, verbose=1
     )
-    pickle.dump(samples, open(fp_samples_archive, "wb"))
+    pickle.dump(samples, open(fp_samples_archive, 'wb'))
 
     # fp_emb = fp_current / Path('emb.hdf5')  # TODO
     # emb = psiz.models.load_embedding(fp_emb)  # TODO
-    # samples = pickle.load(open(fp_samples_archive, "rb"))  # TODO
+    # samples = pickle.load(open(fp_samples_archive, 'rb'))  # TODO
 
     # Select docket using active selection.
-    n_real_trial = pzc_utils.count_real_trials(active_spec["protocol"])
-    n_total_trial = active_spec["nProtocol"] * n_real_trial
+    n_real_trial = pzc_utils.count_real_trials(active_spec['protocol'])
+    n_total_trial = active_spec['nProtocol'] * n_real_trial
     active_gen = psiz.generator.ActiveShotgunGenerator(
         n_reference=8, n_select=2, n_trial_shotgun=2000, priority='kl'
     )
@@ -179,10 +185,10 @@ def update_step(compute_node, host_node, project_id, active_spec, verbose=0):
         n_total_trial, emb, samples, verbose=1
     )
     active_docket.save(fp_docket)
-    pickle.dump(ig_info, open(fp_ig_archive, "wb"))
+    pickle.dump(ig_info, open(fp_ig_archive, 'wb'))
 
     # active_docket = trials.load_trials(fp_docket)  # TODO
-    # ig_info = pickle.load(open(fp_ig_archive, "rb"))  # TODO
+    # ig_info = pickle.load(open(fp_ig_archive, 'rb'))  # TODO
 
     # TODO move to separate function.
     # Generate a random docket of trials for comparison.
@@ -191,21 +197,21 @@ def update_step(compute_node, host_node, project_id, active_spec, verbose=0):
     ig_random = psiz.generator.information_gain(emb, samples, rand_docket)
 
     # Summary plots.
-    ig_trial = ig_info["ig_trial"]
+    ig_trial = ig_info['ig_trial']
     fp_fig_ig = fp_active / Path(
-        "archive", "ig_info_{0}.pdf".format(current_round)
+        'archive', 'ig_info_{0}.pdf'.format(current_round)
     )
     plot_ig_summary(ig_trial, ig_random, fp_fig_ig)
 
     # Create protocols.
     protocol_list = pzc_utils.create_protocol_set(
-        active_spec["protocol"], active_spec["nProtocol"], active_docket,
+        active_spec['protocol'], active_spec['nProtocol'], active_docket,
         catalog.n_stimuli
     )
     # Save new protocols.
     for idx, curr_protocol in enumerate(protocol_list):
         fp_protocol = fp_payload / Path(
-            "protocol_a_{0}-{1}.json".format(current_round, idx)
+            'protocol_a_{0}-{1}.json'.format(current_round, idx)
         )
         with open(fp_protocol, 'w') as outfile:
             json.dump(curr_protocol, outfile)
@@ -261,20 +267,20 @@ def update_embedding(
     # Check dimensionality.
     if np.mod(current_round, dim_check_interval) == 0:
         if verbose > 0:
-            print("    Checking dimensionality...")
+            print('    Checking dimensionality...')
         dim_summary = psiz.dimensionality.dimension_search(
             obs, psiz.models.Exponential, n_stimuli, dim_list=range(2, 20),
             n_restart=100, n_split=10, n_fold=5, verbose=verbose
         )
-        pickle.dump(dim_summary, open(fp_dim_summary, "wb"))
-        n_dim_best = dim_summary["dim_best"]
+        pickle.dump(dim_summary, open(fp_dim_summary, 'wb'))
+        n_dim_best = dim_summary['dim_best']
     else:
         n_dim_best = n_dim_last
 
     if n_dim_best == n_dim_last:
         # Finetune existing embedding.
         loss_train, loss_val = emb.fit(
-            obs, n_restart=10, init_mode="hot", verbose=2
+            obs, n_restart=10, init_mode='hot', verbose=2
         )
     else:
         # Initialize new embedding with changed dimensionality.
@@ -288,8 +294,8 @@ def update_embedding(
     emb.save(fp_emb_archive)
 
     # Log the dimensionality and loss.
-    f = open(fp_log, "a")
-    f.write("{0},{1},{2:.4f},{3:.4f}\n".format(
+    f = open(fp_log, 'a')
+    f.write('{0},{1},{2:.4f},{3:.4f}\n'.format(
         current_round, n_dim_best, loss_train, loss_val
     ))
     f.close()
@@ -307,14 +313,14 @@ def plot_ig_summary(ig_trial, ig_random, filename):
 
     ax = plt.subplot(2, 1, 1)
     ax.hist(ig_random, bins=bins)
-    ax.set_xlabel("Information Gain")
-    ax.set_ylabel("Frequency")
+    ax.set_xlabel('Information Gain')
+    ax.set_ylabel('Frequency')
     ax.set_title('Random')
 
     ax = plt.subplot(2, 1, 2)
     ax.hist(ig_trial, bins=bins)
-    ax.set_xlabel("Information Gain")
-    ax.set_ylabel("Frequency")
+    ax.set_xlabel('Information Gain')
+    ax.set_ylabel('Frequency')
     ax.set_title('Active: Best')
 
     plt.tight_layout()
@@ -322,5 +328,5 @@ def plot_ig_summary(ig_trial, ig_random, filename):
         plt.show()
     else:
         plt.savefig(
-            os.fspath(filename), format='pdf', bbox_inches="tight", dpi=300
+            os.fspath(filename), format='pdf', bbox_inches='tight', dpi=300
         )
