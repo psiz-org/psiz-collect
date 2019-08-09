@@ -109,7 +109,7 @@ def update_andor_request(
         )
 
     # Check budget.
-    is_under_budget = check_if_under_budget(amt_spec['budget'])\
+    is_under_budget = check_if_under_budget(amt_spec['budget'])
     # Check time.
     is_appropriate_time = psizcollect.amt.check_time(amt_spec['utcForbidden'])
 
