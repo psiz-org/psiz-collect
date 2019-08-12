@@ -194,14 +194,21 @@ def write_to_log(
 
 
 def check_for_outstanding_assignments(
-        aws_profile, is_live, fp_log, is_all=False, verbose=0):
+        aws_profile, is_live, fp_log=None, verbose=0):
     """Check for HITs that are not done.
 
     Check for pending or available assignments.
-    """
-    fp_log = Path(fp_log)
-    fp_hit_log = get_hit_log_filepath(fp_log, aws_profile, is_live)
 
+    Arguments:
+        aws_profile:
+        is_live:
+        fp_log:
+        verbose (optional):
+
+    Returns:
+        n_remain_total
+
+    """
     if verbose > 0:
         print_mode(is_live)
 
@@ -213,19 +220,22 @@ def check_for_outstanding_assignments(
 
     #  Assemble HIT ID list.
     hit_id_list = []
-    if is_all:
+    if fp_log is None:
         hit_id_list = get_all_hits(amt_client)
     else:
+        fp_log = Path(fp_log)
+        fp_hit_log = get_hit_log_filepath(fp_log, aws_profile, is_live)
         hit_id_list = get_log_hits(fp_hit_log)
 
     # Check HITs.
+    n_remain_total = 0
     n_hit = len(hit_id_list)
-    print('Number of HITs: {0}\n'.format(n_hit))
     for i_hit in range(n_hit):
         hit_info = inspect_hit(amt_client, hit_id_list[i_hit])
-        is_done = hit_is_done(hit_info)
-        if not is_done:
-            print_hit_summary(hit_info)
+        n_remain = check_remaining(hit_info)
+        if n_remain != 0:
+            n_remain_total = n_remain_total + n_remain
+    return n_remain_total
 
 
 def inspect_hit(amt_client, hit_id):
@@ -258,16 +268,15 @@ def inspect_hit(amt_client, hit_id):
     }
 
 
-def hit_is_done(hit_info):
+def check_remaining(hit_info):
     """Check if HIT is done."""
-    is_done = False
+    n_remain = 0
     if hit_info['is_expired']:
-        is_done = True
+        n_remain = 0
     else:
         n_submitted = hit_info['n_complete'] + hit_info['n_waiting']
-        if n_submitted == hit_info['n_max']:
-            is_done = True
-    return is_done
+        n_remain = hit_info['n_max'] - n_submitted
+    return n_remain
 
 
 def hit_needs_approval(hit_info):
