@@ -338,3 +338,37 @@ def sync_payload(fp_payload, host_node, project_id):
         host_node["user"], host_node["ip"], host_node["public"], project_id
     )
     subprocess.run(cmd, shell=True)
+
+
+def create_hit_on_host(
+        host_node, aws_profile, is_live=False, n_assignment=1, verbose=0):
+    """Create AMT HIT on host node."""
+    # Connect.
+    client = paramiko.SSHClient()
+    client.load_system_host_keys()
+    client.connect(
+        host_node["ip"], port=host_node["port"], username=host_node["user"]
+    )
+
+    cmd_python = (
+        "from psizcollect import amt; "
+        "amt.create_hit('{0}', '{1}', {2}, {3}, fp_log='{4}', verbose={5})"
+    ).format(
+        host_node["hitConfig"], aws_profile, n_assignment, is_live,
+        host_node["hitLog"], verbose
+    )
+    cmd = (
+        '{0} -c "{1}"'
+    ).format(
+        host_node["python"], cmd_python
+    )
+    _, stdout, stderr = client.exec_command(cmd)
+    if verbose > 0:
+        print(stdout.readlines())
+        print(stderr.readlines())
+    client.close()
+
+
+def pull_hit_log_from_host(host_node, project_id):
+    """Pull HIT logs from host node."""
+    return None

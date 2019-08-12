@@ -1,3 +1,4 @@
+
 # -*- coding: utf-8 -*-
 # Copyright 2019 The PsiZ Authors. All Rights Reserved.
 #
@@ -20,9 +21,9 @@ It is assumed that credentials are stored in the [<aws_profile>]
 section of ~/.aws/credentials.
 
 Functions:
-    create_hit_on_host:
     create_hit:
     external_question_xml:
+    write_to_log:
 
 """
 
@@ -33,34 +34,6 @@ from pathlib import Path
 import boto3
 import numpy as np
 import paramiko
-
-
-def create_hit_on_host(
-        host_node, aws_profile, is_live=False, n_assignment=1, verbose=0):
-    """Create AMT HIT on host node."""
-    # Connect.
-    client = paramiko.SSHClient()
-    client.load_system_host_keys()
-    client.connect(
-        host_node["ip"], port=host_node["port"], username=host_node["user"]
-    )
-
-    cmd_python = (
-        "from psizcollect import amt; "
-        "amt.create_hit('{0}', '{1}', {2}, {3}, verbose={4})"
-    ).format(
-        host_node["hitConfig"], aws_profile, n_assignment, is_live, verbose
-    )
-    cmd = (
-        '{0} -c "{1}"'
-    ).format(
-        host_node["python"], cmd_python
-    )
-    _, stdout, stderr = client.exec_command(cmd)
-    if verbose > 0:
-        print(stdout.readlines())
-        print(stderr.readlines())
-    client.close()
 
 
 def create_hit(
@@ -207,23 +180,17 @@ def write_to_log(
         hit_id:
         fp_hit_config:
     """
-    fp_log_profile = fp_log / Path(aws_profile)
     # Create log directories if necessary.
+    fp_log_profile = fp_log / Path(aws_profile)
     if not fp_log_profile.exists():
         fp_log_profile.mkdir(parents=True)
 
     ymd_str = datetime.datetime.today().strftime('%Y-%m-%d')
-
-    if is_live:
-        with open(fp_log / Path(aws_profile, 'hit_live.txt'), 'a') as f:
-            f.write(
-                "{0}, {1}, {2}\n".format(hit_id, ymd_str, fp_hit_config)
-            )
-    else:
-        with open(fp_log / Path(aws_profile, 'hit_sandbox.txt'), 'a') as f:
-            f.write(
-                "{0}, {1}, {2}\n".format(hit_id, ymd_str, fp_hit_config)
-            )
+    fp_hit_log = get_hit_log_filepath(fp_log, aws_profile, is_live)
+    with open(fp_hit_log, 'a') as f:
+        f.write(
+            "{0}, {1}, {2}\n".format(hit_id, ymd_str, fp_hit_config)
+        )
 
 
 def check_for_outstanding_assignments(
@@ -233,7 +200,7 @@ def check_for_outstanding_assignments(
     Check for pending or available assignments.
     """
     fp_log = Path(fp_log)
-    fp_hit_log = get_hit_log(fp_log, aws_profile, is_live)
+    fp_hit_log = get_hit_log_filepath(fp_log, aws_profile, is_live)
 
     if verbose > 0:
         print_mode(is_live)
@@ -369,7 +336,6 @@ def get_log_hits(fp_hit_log):
         f = open(fp_hit_log, 'r')
         for ln in f:
             parts = ln.split(',')
-            # print(parts[0].strip())
             hit_id_list.append(
                 parts[0].strip()
             )
@@ -377,7 +343,7 @@ def get_log_hits(fp_hit_log):
     return hit_id_list
 
 
-def get_hit_log(fp_log, aws_profile, is_live):
+def get_hit_log_filepath(fp_log, aws_profile, is_live):
     """Return filepath for hit log.
 
     Arguments:

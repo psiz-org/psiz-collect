@@ -116,7 +116,7 @@ def update_andor_request(
     if is_under_budget and is_appropriate_time:
         # Can create HIT.
         print('Creating a HIT with {0} assignment(s).'.format(n_assignment))
-        psizcollect.amt.create_hit_on_host(
+        psizcollect.pipes.create_hit_on_host(
             host_node, amt_spec['profile'], is_live=True,
             n_assignment=n_assignment, verbose=1
         )
