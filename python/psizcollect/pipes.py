@@ -369,6 +369,11 @@ def create_hit_on_host(
     client.close()
 
 
-def pull_hit_log_from_host(host_node, project_id):
-    """Pull HIT logs from host node."""
-    return None
+def pull_hit_log_from_host(host_node, project_id, fp_amt):
+    """Pull all project HIT logs from host node."""
+    cmd = (
+        'scp -r {0}@{1}:.psiz-collect/projects/{2}/amt/hit-log/* {3}/hit-log/'
+    ).format(
+        host_node["user"], host_node["ip"], project_id, os.fspath(fp_amt)
+    )
+    subprocess.run(cmd, shell=True)

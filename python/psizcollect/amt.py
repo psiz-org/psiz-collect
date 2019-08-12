@@ -331,6 +331,8 @@ def get_all_hits(amt_client):
 
 def get_log_hits(fp_hit_log):
     """Only review HITS stored in logs."""
+    fp_hit_log = Path(fp_hit_log)
+
     hit_id_list = []
     if fp_hit_log.exists():
         f = open(fp_hit_log, 'r')
@@ -393,3 +395,65 @@ def check_time(utc_forbidden):
     if np.sum(np.equal(dt_now.hour, utc_forbidden)) == 0:
         is_appropriate_time = True
     return is_appropriate_time
+
+
+def compute_expenditures(hit_id_list, aws_profile, is_live):
+    """Compute expenditures.
+
+    For each HIT:
+    - Determine the reward per assignment
+    - Determine the number of approved (i.e., paid) assignments
+    - Determine AMT's commission on the HIT.
+
+    Arguments:
+        hit_id_list: List of HIT IDs to consider.
+        aws_profile: The AWS profile to use.
+        is_live: Boolean indicating whether to probe the live or
+            sandbox database.
+
+    Returns:
+        total_expenditure: Total expenditures.
+
+    """
+    # Create AMT client.
+    session = boto3.Session(profile_name=aws_profile)
+    amt_client = session.client(
+        'mturk', endpoint_url=get_endpoint_url(is_live)
+    )
+
+    # Pre-allocate variables.
+    n_hit = len(hit_id_list)
+    reward_list = np.zeros([n_hit])
+    n_approve_list = np.zeros([n_hit])
+    commission_rate_list = np.zeros([n_hit])
+
+    for idx, hit_id in enumerate(hit_id_list):
+        r = amt_client.get_hit(HITId=hit_id)
+        n_max_assignment = r['HIT']['MaxAssignments']
+        reward_list[idx] = r['HIT']['Reward']
+        commission_rate_list[idx] = determine_amt_commission_rate(
+            n_max_assignment
+        )
+        r = amt_client.list_assignments_for_hit(
+            HITId=hit_id, AssignmentStatuses=['Approved']
+        )
+        n_approve_list[idx] = r['NumResults']
+
+    # Total expenditures.
+    hit_reward = n_approve_list * reward_list
+    hit_expenditure = hit_reward * (1 + commission_rate_list)
+    total_expenditure = np.sum(hit_expenditure)
+    return total_expenditure
+
+
+def determine_amt_commission_rate(n_max_assignment):
+    """Determine AMT commission.
+
+    Arguments:
+        n_max_assignment: The maximum number of assignments associated
+            with the HIT.
+    """
+    amt_commision = .2
+    if n_max_assignment > 9:
+        amt_commision = .4
+    return amt_commision

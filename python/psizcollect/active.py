@@ -109,7 +109,7 @@ def update_andor_request(
         )
 
     # Check budget.
-    is_under_budget = check_if_under_budget(amt_spec['budget'])
+    is_under_budget = check_if_under_budget(compute_node, amt_spec)
     # Check time.
     is_appropriate_time = psizcollect.amt.check_time(amt_spec['utcForbidden'])
 
@@ -185,9 +185,25 @@ def check_if_sufficient_data(compute_node, active_spec, verbose=0):
     return is_sufficient, current_total
 
 
-def check_if_under_budget(budget):
+def check_if_under_budget(compute_node, amt_spec, is_live=True):
     """Check that the project is still under budget."""
-    is_under_budget = True  # TODO
+    is_under_budget = False
+
+    if is_live:
+        fn = 'hit_live.txt'
+    else:
+        fn = 'hit_sandbox.txt'
+
+    fp_hit_log = Path(compute_node['amt']) / Path(
+        'hit-log', amt_spec['profile'], fn
+    )
+    hit_id_list = psizcollect.amt.get_log_hits(fp_hit_log)
+    total = psizcollect.amt.compute_expenditures(
+        hit_id_list, amt_spec['profile'], is_live
+    )
+
+    if total < amt_spec['budget']:
+        is_under_budget = True
     return is_under_budget
 
 
@@ -215,14 +231,16 @@ def update_step(compute_node, host_node, project_id, active_spec, verbose=0):
 
     # Archive assets.
     fp_archive = fp_active / Path('archive')
-    if not fp_archive.exists():
-        fp_archive.mkdir(parents=True)
-    fp_samples_archive = fp_archive / Path('samples_{0}.p'.format(
+    fp_samples_archive = fp_archive / Path('samples', 'samples_{0}.p'.format(
         current_round
     ))
-    fp_ig_archive = fp_archive / Path('ig_info_{0}.p'.format(
+    fp_ig_archive = fp_archive / Path('ig', 'ig_info_{0}.p'.format(
         current_round
     ))
+    if not fp_samples_archive.exists():
+        fp_samples_archive.mkdir(parents=True)
+    if not fp_ig_archive.exists():
+        fp_ig_archive.mkdir(parents=True)
 
     # Update embedding.
     emb = update_embedding(
