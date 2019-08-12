@@ -93,39 +93,58 @@ def update_andor_request(
         active_spec:
         amt_spec:
     """
-    # Check if there is sufficient data.
-    is_sufficient, current_total = check_if_sufficient_data(
-        compute_node, active_spec, verbose=1
+    fp_amt = Path(compute_node['amt'])
+    fp_log = fp_amt / Path('hit-log')
+    psizcollect.pipes.pull_hit_log_from_host(host_node, project_id, fp_amt)
+
+    # Check for unsubmitted assignments.
+    n_remain = psizcollect.amt.check_for_outstanding_assignments(
+        amt_spec['profile'], True, fp_log
     )
 
-    if is_sufficient:
-        update_step(
-            compute_node, host_node, project_id, active_spec
-        )
-        n_assignment = active_spec['nAssignment']
-    else:
-        n_assignment = np.maximum(
-            0, active_spec['nAssignment'] - current_total
+    if n_remain == 0:
+        # Check if there is sufficient data.
+        is_sufficient, current_total = check_if_sufficient_data(
+            compute_node, active_spec, verbose=1
         )
 
-    # Check budget.
-    is_under_budget = check_if_under_budget(compute_node, amt_spec)
-    # Check time.
-    is_appropriate_time = psizcollect.amt.check_time(amt_spec['utcForbidden'])
+        if is_sufficient:
+            update_step(
+                compute_node, host_node, project_id, active_spec
+            )
+            n_assignment = active_spec['nAssignment']
+        else:
+            n_assignment = np.maximum(
+                0, active_spec['nAssignment'] - current_total
+            )
 
-    if is_under_budget and is_appropriate_time:
-        # Can create HIT.
-        print('Creating a HIT with {0} assignment(s).'.format(n_assignment))
-        psizcollect.pipes.create_hit_on_host(
-            host_node, amt_spec['profile'], is_live=True,
-            n_assignment=n_assignment, verbose=1
+        # Check budget.
+        is_under_budget = check_if_under_budget(compute_node, amt_spec)
+        # Check time.
+        is_appropriate_time = psizcollect.amt.check_time(
+            amt_spec['utcForbidden']
         )
+
+        if is_under_budget and is_appropriate_time:
+            # Can create HIT.
+            print('Creating a HIT with {0} assignment(s).'.format(n_assignment))
+            psizcollect.pipes.create_hit_on_host(
+                host_node, amt_spec['profile'], is_live=True,
+                n_assignment=n_assignment, verbose=1
+            )
+            psizcollect.pipes.pull_hit_log_from_host(
+                host_node, project_id, fp_amt
+            )
+        else:
+            print('HIT cannot be created.')
+            if not is_under_budget:
+                print('  Insufficient budget.')
+            if not is_appropriate_time:
+                print('  Outside allowed time.')
+
     else:
-        print('HIT cannot be created.')
-        if not is_under_budget:
-            print('  Insufficient budget.')
-        if not is_appropriate_time:
-            print('  Outside allowed time.')
+        print('There are still outstanding assignments: {0}'.format(n_remain))
+
 
 
 def check_if_sufficient_data(compute_node, active_spec, verbose=0):
