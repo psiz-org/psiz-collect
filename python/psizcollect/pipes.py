@@ -377,3 +377,32 @@ def pull_hit_log_from_host(host_node, project_id, fp_amt):
         host_node["user"], host_node["ip"], project_id, os.fspath(fp_amt)
     )
     subprocess.run(cmd, shell=True)
+
+
+def review_vouchers_on_host(host_node, project_id, amt_spec, verbose=0):
+    """Review sumbitted AMT vouchers on host.
+
+    Arguments:
+        host_node:
+        project_id:
+        amt_spec:
+        verbose (optional):
+    """
+    # Connect.
+    client = paramiko.SSHClient()
+    client.load_system_host_keys()
+    client.connect(
+        host_node["ip"], port=host_node["port"], username=host_node["user"]
+    )
+
+    cmd = (
+        '{0} .amt-voucher/python/review_vouchers.py "{1}" --live '
+        '--fp_app .psiz-collect/projects/{2}/amt/hit-log/'
+    ).format(
+        host_node['python'], amt_spec['profile'], project_id
+    )
+    _, stdout, stderr = client.exec_command(cmd)
+    if verbose > 0:
+        print(stdout.readlines())
+        print(stderr.readlines())
+    client.close()
