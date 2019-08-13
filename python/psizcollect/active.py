@@ -127,7 +127,9 @@ def update_andor_request(
 
         if is_under_budget and is_appropriate_time:
             # Can create HIT.
-            print('Creating a HIT with {0} assignment(s).'.format(n_assignment))
+            print(
+                'Creating a HIT with {0} assignment(s).'.format(n_assignment)
+            )
             psizcollect.pipes.create_hit_on_host(
                 host_node, amt_spec['profile'], is_live=True,
                 n_assignment=n_assignment, verbose=1
@@ -144,7 +146,6 @@ def update_andor_request(
 
     else:
         print('There are still outstanding assignments: {0}'.format(n_remain))
-
 
 
 def check_if_sufficient_data(compute_node, active_spec, verbose=0):
@@ -256,10 +257,10 @@ def update_step(compute_node, host_node, project_id, active_spec, verbose=0):
     fp_ig_archive = fp_archive / Path('ig', 'ig_info_{0}.p'.format(
         current_round
     ))
-    if not fp_samples_archive.exists():
-        fp_samples_archive.mkdir(parents=True)
-    if not fp_ig_archive.exists():
-        fp_ig_archive.mkdir(parents=True)
+    # if not fp_samples_archive.exists():
+    #     fp_samples_archive.mkdir(parents=True)
+    # if not fp_ig_archive.exists():
+    #     fp_ig_archive.mkdir(parents=True)
 
     # Update embedding.
     emb = update_embedding(
