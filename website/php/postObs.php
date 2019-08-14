@@ -37,7 +37,7 @@ function insertTrial($stmt, $type, $assignmentId, $page) {
  * 
  */
 function updateAssignmentStatus($link, $assignmentId) {
-    $query = "UPDATE assignment SET status_code = 1 WHERE assignment_id=?";
+    $query = "UPDATE assignment SET status_code = 1, end_hit = CURRENT_TIME() WHERE assignment_id=?";
     $type = "i";
     $stmt = mysqli_prepare($link, $query);
     mysqli_stmt_bind_param(
