@@ -667,7 +667,7 @@ var AppController = function(stimulusList, appState) {
 
             var trial = appState.docket[appState.docketIdx];
             appendBehavior(trial, startTimestamp, submitTimeMs, selectionState)
-            console.log("trial: " + appState.docket[appState.docketIdx])
+            // console.log("trial: " + appState.docket[appState.docketIdx])
 
             appState.docketIdx += 1;
 
