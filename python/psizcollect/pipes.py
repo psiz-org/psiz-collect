@@ -20,8 +20,18 @@ Tools for assembling pipelines. See README for assumed dictionary
 structure of `host_node` and `compute_node`.
 
 Functions:
-    psiz_cursor:
-    fetch_assignment:
+    update_obs_on_host:
+    write_metadata:
+    write_summary:
+    assignment_summary:
+    observation_summary:
+    protocol_summary:
+    warning_summary:
+    pull_obs_from_host:
+    sync_payload:
+    create_hit_on_host:
+    pull_hit_log_from_host:
+    review_vouchers_on_host:
 """
 
 import configparser

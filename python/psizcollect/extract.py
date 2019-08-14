@@ -21,6 +21,15 @@ It is assumed that your MySQL credentials are stored at
 they are stored somewhere else, with a different format, the variable
 `fp_mysql_credentials`, `host`, `user`,`passwd`, and `db` need to be
 changed.
+
+Functions:
+    extract_observations:
+    filter_assignment:
+    fetch_assignment:
+    assemble_accepted_obs:
+    create_obs_agent:
+    update_status:
+
 """
 
 import argparse
@@ -313,6 +322,10 @@ def assemble_accepted_obs(
                         obs = obs_agent
                     else:
                         obs = psiz.trials.stack((obs, obs_agent))
+        else:
+            # Zero trials, mark as expired and incomplete assignment.
+            if dict_meta['status_code'][idx] == STATUS_CREATED:
+                update_status(my_cxn, assignment_id, STATUS_EXPIRED)
 
     obs = psiz.preprocess.remove_catch_trials(obs)
     df_meta = pd.DataFrame.from_dict(dict_meta)

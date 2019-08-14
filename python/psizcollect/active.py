@@ -119,7 +119,9 @@ def update_andor_request(
             )
 
         # Check budget.
-        is_under_budget = check_if_under_budget(compute_node, amt_spec)
+        is_under_budget = check_if_under_budget(
+            compute_node, amt_spec, verbose=1
+        )
         # Check time.
         is_appropriate_time = psizcollect.amt.check_time(
             amt_spec['utcForbidden']
@@ -205,7 +207,7 @@ def check_if_sufficient_data(compute_node, active_spec, verbose=0):
     return is_sufficient, current_total
 
 
-def check_if_under_budget(compute_node, amt_spec, is_live=True):
+def check_if_under_budget(compute_node, amt_spec, is_live=True, verbose=0):
     """Check that the project is still under budget."""
     is_under_budget = False
 
@@ -218,12 +220,23 @@ def check_if_under_budget(compute_node, amt_spec, is_live=True):
         'hit-log', amt_spec['profile'], fn
     )
     hit_id_list = psizcollect.amt.get_log_hits(fp_hit_log)
-    total = psizcollect.amt.compute_expenditures(
+    total_expend = psizcollect.amt.compute_expenditures(
         hit_id_list, amt_spec['profile'], is_live
     )
 
-    if total < amt_spec['budget']:
+    if total_expend < amt_spec['budget']:
         is_under_budget = True
+
+    if verbose > 0:
+        print(
+            (
+                'Budget: {0:.2f} | Expenditures: {1:.2f} | '
+                'Remaining funds: {2:.2f}'
+            ).format(
+                amt_spec['budget'], total_expend,
+                amt_spec['budget'] - total_expend
+            )
+        )
     return is_under_budget
 
 
@@ -274,9 +287,9 @@ def update_step(compute_node, host_node, project_id, active_spec, verbose=0):
     )
     pickle.dump(samples, open(fp_samples_archive, 'wb'))
 
-    # fp_emb = fp_current / Path('emb.hdf5')  # TODO
-    # emb = psiz.models.load_embedding(fp_emb)  # TODO
-    # samples = pickle.load(open(fp_samples_archive, 'rb'))  # TODO
+    # fp_emb = fp_current / Path('emb.hdf5')
+    # emb = psiz.models.load_embedding(fp_emb)
+    # samples = pickle.load(open(fp_samples_archive, 'rb'))
 
     # Select docket using active selection.
     n_real_trial = pzc_utils.count_real_trials(active_spec['protocol'])
@@ -290,8 +303,8 @@ def update_step(compute_node, host_node, project_id, active_spec, verbose=0):
     active_docket.save(fp_docket)
     pickle.dump(ig_info, open(fp_ig_archive, 'wb'))
 
-    # active_docket = trials.load_trials(fp_docket)  # TODO
-    # ig_info = pickle.load(open(fp_ig_archive, 'rb'))  # TODO
+    # active_docket = trials.load_trials(fp_docket)
+    # ig_info = pickle.load(open(fp_ig_archive, 'rb'))
 
     # TODO move to separate function.
     # Generate a random docket of trials for comparison.
@@ -302,7 +315,7 @@ def update_step(compute_node, host_node, project_id, active_spec, verbose=0):
     # Summary plots.
     ig_trial = ig_info['ig_trial']
     fp_fig_ig = fp_active / Path(
-        'archive', 'ig_info_{0}.pdf'.format(current_round)
+        'archive', 'ig', 'ig_info_{0}.pdf'.format(current_round)
     )
     plot_ig_summary(ig_trial, ig_random, fp_fig_ig)
 
