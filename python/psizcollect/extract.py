@@ -188,7 +188,7 @@ def fetch_assignment(my_cxn, project_id):
     """
     query_assignment = (
         "SELECT assignment_id, protocol_id, worker_id, status_code, "
-        "begin_hit, end_hit FROM assignment WHERE project_id=%s"
+        "begin_hit, end_hit, ver FROM assignment WHERE project_id=%s"
     )
     vals = (project_id,)
     my_cursor = my_cxn.cursor()
@@ -203,6 +203,7 @@ def fetch_assignment(my_cxn, project_id):
     begin_hit = []
     end_hit = []
     duration_hit_min = []
+    ver_list = []
 
     n_row = len(sql_result)
     for i_row in range(n_row):
@@ -212,6 +213,7 @@ def fetch_assignment(my_cxn, project_id):
         status_list.append(sql_result[i_row][3])
         begin_datetime = sql_result[i_row][4]
         end_datetime = sql_result[i_row][5]
+        ver_list.append(sql_result[i_row][6])
 
         begin_hit.append(begin_datetime)
         end_hit.append(end_datetime)
@@ -227,7 +229,8 @@ def fetch_assignment(my_cxn, project_id):
         "status_code": np.asarray(status_list),
         "begin_hit": begin_hit,
         "end_hit": end_hit,
-        "duration_hit_min": np.asarray(duration_hit_min)
+        "duration_hit_min": np.asarray(duration_hit_min),
+        "ver": np.asarray(ver_list)
     }
     df_assignment = pd.DataFrame.from_dict(dict_assignment)
     return df_assignment
