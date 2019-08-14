@@ -5,10 +5,10 @@
             <h1 class='overlay__title'>You're all done!</h1>
             <p>You have sucessfully completed the session.</p>
             <div class="voucher">
-                <p>Please copy the following voucher code and use it to complete the HIT.</p>
+                <p>Please copy the following voucher code and use it to complete the HIT. The voucher code may take a moment to load.</p>
                 <div id=voucher__box>
                     <div id="voucher__label">Voucher Code</div>
-                    <textarea id="voucher__code" rows="1" readonly>XXXXXXXXXXXX</textarea>
+                    <textarea id="voucher__code" rows="1" readonly>------------</textarea>
                 </div>
                 <div id="voucher__hint">click box to select</div>
                 <p>Please close the browser tab after submitting the voucher code. If you encounter any issues submitting the HIT, please email the requester and include the voucher code in your email.</p>
