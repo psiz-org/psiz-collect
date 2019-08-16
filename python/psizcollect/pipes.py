@@ -76,7 +76,7 @@ def update_obs_on_host(
 
     cmd_python = (
         "from psizcollect import extract; "
-        "extract.extract_observations('{0}', '{1}', {2})"
+        "extract.extract_observations('{0}', '{1}', {2}, use_preexist=False)"
     ).format(
         project_id, grade_mode, grade_threshold
     )
