@@ -296,7 +296,7 @@ def update_step(compute_node, host_node, project_id, active_spec, verbose=0):
     n_total_trial = active_spec['nProtocol'] * n_real_trial
     active_gen = psiz.generator.ActiveShotgunGenerator(
         n_reference=8, n_select=2,
-        n_trial_shotgun=active_spec['nTrialShotgun'], priority='kl'
+        n_trial_shotgun=active_spec['nTrialShotgun'], priority='entropy'
     )
     active_docket, ig_info = active_gen.generate(
         n_total_trial, emb, samples, verbose=1
