@@ -34,6 +34,7 @@ Functions:
 
 import argparse
 import configparser
+import copy
 from datetime import datetime
 import os
 from pathlib import Path
@@ -257,8 +258,10 @@ def assemble_accepted_obs(
     """
     n_assignment = len(df_assignment["assignment_id"].values)
 
-    worker_list = pd.unique(df_assignment["worker_id"].values)
-    agent_id_list = np.arange(len(worker_list)) + max_agent_id
+    unique_worker_id_list = pd.unique(df_assignment["worker_id"].values)
+    n_unique_worker = len(unique_worker_id_list)
+    unique_agent_id_list = np.arange(n_unique_worker) + max_agent_id
+    agent_id_counter = np.zeros([n_unique_worker])
 
     # Initialize.
     obs = None
@@ -274,6 +277,16 @@ def assemble_accepted_obs(
         'grade': np.zeros([n_assignment]),
         'is_accepted': np.zeros(n_assignment, dtype=bool)
     }
+
+    # Determine agent IDs and session IDs.
+    for idx, assignment_id in enumerate(dict_meta["assignment_id"]):
+        agent_loc = np.equal(
+            df_assignment["worker_id"].values[idx], unique_worker_id_list
+        )
+        agent_id = unique_agent_id_list[agent_loc]
+        dict_meta['agent_id'][idx] = agent_id
+        dict_meta['session_id'][idx] = copy.copy(agent_id_counter[agent_loc])
+        agent_id_counter[agent_loc] = agent_id_counter[agent_loc] + 1
 
     query_trial = (
         "SELECT trial_id, assignment_id, n_select, is_ranked, q_idx, "
@@ -293,11 +306,9 @@ def assemble_accepted_obs(
         n_trial = len(sql_result)
 
         if n_trial > 0:
-            agent_id = agent_id_list[np.equal(
-                df_assignment["worker_id"].values[idx], worker_list
-            )]
-            dict_meta['agent_id'][idx] = agent_id
-            obs_agent = create_obs_agent(sql_result, agent_id)
+            agent_id = dict_meta['agent_id'][idx]
+            session_id = dict_meta['session_id'][idx]
+            obs_agent = create_obs_agent(sql_result, agent_id, session_id)
             dict_meta['avg_trial_rt'][idx] = np.mean(obs_agent.rt_ms)
             dict_meta['n_trial'][idx] = n_trial
             (avg_grade, _, is_catch) = (
@@ -336,11 +347,12 @@ def assemble_accepted_obs(
     return obs, df_meta
 
 
-def create_obs_agent(sql_result, agent_id):
+def create_obs_agent(sql_result, agent_id, session_id):
     """Create Observations object for single agent."""
     n_trial = len(sql_result)
 
     agent_id = agent_id * np.ones([n_trial], dtype=int)
+    session_id = session_id * np.ones([n_trial], dtype=int)
     response_set = -1 * np.ones([n_trial, 1 + N_MAX_REF], dtype=int)
     n_select = np.ones([n_trial], dtype=int)
     is_ranked = np.ones([n_trial], dtype=int)
@@ -372,7 +384,7 @@ def create_obs_agent(sql_result, agent_id):
 
     obs = psiz.trials.Observations(
         response_set, n_select=n_select, is_ranked=is_ranked,
-        agent_id=agent_id, rt_ms=rt_submit_ms
+        agent_id=agent_id, session_id=session_id, rt_ms=rt_submit_ms
     )
     return obs
 
