@@ -268,6 +268,7 @@ def assemble_accepted_obs(
     dict_meta = {
         'assignment_id': df_assignment['assignment_id'].values,
         'agent_id': np.zeros([n_assignment], dtype=int),
+        'session_id': np.zeros([n_assignment], dtype=int),
         'protocol_id': df_assignment['protocol_id'].values,
         'status_code': df_assignment['status_code'].values,
         'duration_hit_min': df_assignment['duration_hit_min'].values,
