@@ -30,12 +30,13 @@ Functions:
 
 """
 
-import datetime
+from datetime import datetime, timedelta
 import json
 import os
 from pathlib import Path
 import pickle
 import subprocess
+from threading import Timer
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -139,15 +140,43 @@ def update_andor_request(
             psizcollect.pipes.pull_hit_log_from_host(
                 host_node, project_id, fp_amt
             )
+            # Check back in one hour.  TODO
+            secs = 60 * 60
+            print('Waiting {0} seconds ...'.format(secs))
+            t = Timer(
+                secs, update_andor_request, args=[
+                    compute_node, host_node, project_id, active_spec, amt_spec
+                ]
+            )
+            t.start()
         else:
             print('HIT cannot be created.')
             if not is_under_budget:
                 print('  Insufficient budget.')
             if not is_appropriate_time:
                 print('  Outside allowed time.')
+                # Schedule another check when inside allowed time.
+                secs = psizcollect.amt.wait_time(amt_spec['utcForbidden'])
+                print('Waiting {0} seconds ...'.format(secs))
+                t = Timer(
+                    secs, update_andor_request, args=[
+                        compute_node, host_node, project_id, active_spec,
+                        amt_spec
+                    ]
+                )
+                t.start()
 
     else:
         print('There are still outstanding assignments: {0}'.format(n_remain))
+        # Check back in 30 minutes
+        secs = 60 * 30
+        print('Waiting {0} seconds ...'.format(secs))
+        t = Timer(
+            secs, update_andor_request, args=[
+                compute_node, host_node, project_id, active_spec, amt_spec
+            ]
+        )
+        t.start()
 
 
 def check_if_sufficient_data(compute_node, active_spec, verbose=0):

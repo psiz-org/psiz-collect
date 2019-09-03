@@ -406,6 +406,43 @@ def check_time(utc_forbidden):
     return is_appropriate_time
 
 
+def wait_time(utc_forbidden):
+    """Determine how many seconds until HIT is allowed to be created.
+
+    Times are assumed to be UTC.
+
+    Arguments:
+        utc_forbidden: A list of UTC hours that indicates times when
+            creating new HITs is forbidden.
+
+    Returns:
+        secs: The number of seconds until the HIT can be created.
+
+    """
+    dt_now = datetime.datetime.utcnow()
+
+    utc_hours = np.arange(0, 24)
+    utc_allowed = []
+    for hour in utc_hours:
+        if np.sum(np.equal(hour, utc_forbidden)) == 0:
+            utc_allowed.append(hour)
+    utc_allowed = np.asanyarray(utc_allowed, dtype=int)
+
+    locs = np.greater_equal(utc_allowed, dt_now.hour)
+    utc_allowed_future = utc_allowed[locs]
+
+    if len(utc_allowed_future) == 0:
+        utc_next = dt_now + datetime.timedelta(days=1)
+        utc_next.replace(hour=utc_allowed[0])
+    else:
+        utc_next = dt_now
+        utc_next.replace(hour=utc_allowed_future[0])
+
+    delta_t = dt_now - dt_now
+    secs = delta_t.total_seconds()
+    return secs
+
+
 def compute_expenditures(hit_id_list, aws_profile, is_live):
     """Compute expenditures.
 

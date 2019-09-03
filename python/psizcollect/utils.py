@@ -195,3 +195,22 @@ def count_real_trials(protocol):
             n_real_trial = n_real_trial + part['nTrial'] - part['nCatch']
         # elif part['content'] == 'trial':  TODO
     return n_real_trial
+
+
+def print_protocol_summary(df_meta):
+    """Print summary of unique protocols."""
+    is_accepted_list = df_meta['is_accepted'].values
+    protocol_id_list = df_meta['protocol_id'].values
+    protocol_accept_list = protocol_id_list[is_accepted_list]
+    uniq_list, protocol_count = np.unique(
+        protocol_accept_list, return_counts=True
+    )
+    print('  |----------------------------|')
+    print('  | N  | protocol_id           |')
+    print('  |----------------------------|')
+    print(
+        '  | {0: <2} | total                 |'.format(np.sum(protocol_count))
+    )
+    for idx, protocol_id in enumerate(uniq_list):
+        print('  | {0: <2} | {1} |'.format(protocol_count[idx], protocol_id))
+    print('  |----------------------------|')
