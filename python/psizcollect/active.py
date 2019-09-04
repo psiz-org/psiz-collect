@@ -156,8 +156,14 @@ def update_andor_request(
             if not is_appropriate_time:
                 print('  Outside allowed time.')
                 # Schedule another check when inside allowed time.
-                secs = psizcollect.amt.wait_time(amt_spec['utcForbidden'])
-                print('Waiting {0} seconds ...'.format(secs))
+                delta_t = psizcollect.amt.wait_time(amt_spec['utcForbidden'])
+                secs = delta_t.total_seconds()
+                dt_now_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+                print(
+                    '{0} | Checking back in {1} ...'.format(
+                        dt_now_str, str(delta_t)
+                    )
+                )
                 t = Timer(
                     secs, update_andor_request, args=[
                         compute_node, host_node, project_id, active_spec,

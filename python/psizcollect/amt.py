@@ -416,7 +416,8 @@ def wait_time(utc_forbidden):
             creating new HITs is forbidden.
 
     Returns:
-        secs: The number of seconds until the HIT can be created.
+        delta_t: A datetime.timedelta objecj indicating the time until
+            the HIT can be created.
 
     """
     dt_now = datetime.datetime.utcnow()
@@ -433,14 +434,13 @@ def wait_time(utc_forbidden):
 
     if len(utc_allowed_future) == 0:
         utc_next = dt_now + datetime.timedelta(days=1)
-        utc_next.replace(hour=utc_allowed[0])
+        utc_next = utc_next.replace(hour=utc_allowed[0])
     else:
         utc_next = dt_now
-        utc_next.replace(hour=utc_allowed_future[0])
+        utc_next = utc_next.replace(hour=utc_allowed_future[0])
 
-    delta_t = dt_now - dt_now
-    secs = delta_t.total_seconds()
-    return secs
+    delta_t = utc_next - dt_now
+    return delta_t
 
 
 def compute_expenditures(hit_id_list, aws_profile, is_live):
