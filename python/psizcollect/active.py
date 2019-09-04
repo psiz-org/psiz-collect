@@ -82,7 +82,8 @@ def get_current_round(fp_active, verbose=0):
 
 
 def update_andor_request(
-        compute_node, host_node, project_id, active_spec, amt_spec):
+        compute_node, host_node, project_id, grade_spec, amt_spec,
+        active_spec):
     """Update the round and/or request more observations.
 
     Before requesting more observations, the budget is checked.
@@ -91,16 +92,28 @@ def update_andor_request(
         compute_node:
         host_node:
         project_id:
-        active_spec:
+        grade_spec:
         amt_spec:
+        active_spec:
     """
+    fp_master_log = Path(compute_node['masterLog'])
+    fp_assets = Path(compute_node['assets'])
     fp_amt = Path(compute_node['amt'])
-    fp_log = fp_amt / Path('hit-log')
-    psizcollect.pipes.pull_hit_log_from_host(host_node, project_id, fp_amt)
+    fp_hit_log = fp_amt / Path('hit-log')
+    pzc_pipes.pull_hit_log_from_host(host_node, project_id, fp_amt)
+
+    # Update local assets.
+    pzc_pipes.update_obs_on_host(
+        host_node, project_id, grade_spec['mode'], grade_spec['threshold'],
+        verbose=1
+    )
+    pzc_pipes.pull_obs_from_host(
+        host_node, project_id, fp_assets, verbose=1
+    )
 
     # Check for unsubmitted assignments.
     n_remain = psizcollect.amt.check_for_outstanding_assignments(
-        amt_spec['profile'], True, fp_log
+        amt_spec['profile'], True, fp_hit_log
     )
 
     if n_remain == 0:
@@ -130,9 +143,8 @@ def update_andor_request(
 
         if is_under_budget and is_appropriate_time:
             # Can create HIT.
-            print(
-                'Creating a HIT with {0} assignment(s).'.format(n_assignment)
-            )
+            msg = 'Creating a HIT with {0} assignment(s).'.format(n_assignment)
+            write_master_log(fp_master_log, msg)
             psizcollect.pipes.create_hit_on_host(
                 host_node, amt_spec['profile'], is_live=True,
                 n_assignment=n_assignment, verbose=1
@@ -142,44 +154,50 @@ def update_andor_request(
             )
             # Check back in one hour.  TODO
             secs = 60 * 60
-            print('Waiting {0} seconds ...'.format(secs))
+            msg = 'Checking back in 01:00:00 ...'
+            write_master_log(fp_master_log, msg)
             t = Timer(
                 secs, update_andor_request, args=[
-                    compute_node, host_node, project_id, active_spec, amt_spec
+                    compute_node, host_node, project_id, grade_spec, amt_spec,
+                    active_spec
                 ]
             )
             t.start()
         else:
-            print('HIT cannot be created.')
+            msg = 'HIT cannot be created.'
+            write_master_log(fp_master_log, msg)
             if not is_under_budget:
-                print('  Insufficient budget.')
+                msg = '  Insufficient budget.'
+                write_master_log(fp_master_log, msg)
             if not is_appropriate_time:
-                print('  Outside allowed time.')
+                msg = '  Outside allowed time.'
+                write_master_log(fp_master_log, msg)
                 # Schedule another check when inside allowed time.
                 delta_t = psizcollect.amt.wait_time(amt_spec['utcForbidden'])
+
+                msg = 'Checking back in {0} ...'.format(str(delta_t))
+                write_master_log(fp_master_log, msg)
+
                 secs = delta_t.total_seconds()
-                dt_now_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-                print(
-                    '{0} | Checking back in {1} ...'.format(
-                        dt_now_str, str(delta_t)
-                    )
-                )
                 t = Timer(
                     secs, update_andor_request, args=[
-                        compute_node, host_node, project_id, active_spec,
-                        amt_spec
+                        compute_node, host_node, project_id, grade_spec,
+                        amt_spec, active_spec
                     ]
                 )
                 t.start()
-
     else:
-        print('There are still outstanding assignments: {0}'.format(n_remain))
+        msg = 'There are still {0} outstanding assignment(s).'.format(n_remain)
+        write_master_log(fp_master_log, msg)
+
         # Check back in 30 minutes
         secs = 60 * 30
-        print('Waiting {0} seconds ...'.format(secs))
+        msg = 'Checking back in 00:30:00 ...'
+        write_master_log(fp_master_log, msg)
         t = Timer(
             secs, update_andor_request, args=[
-                compute_node, host_node, project_id, active_spec, amt_spec
+                compute_node, host_node, project_id, grade_spec, amt_spec,
+                active_spec
             ]
         )
         t.start()
@@ -482,3 +500,23 @@ def plot_ig_summary(ig_trial, ig_random, filename):
         plt.savefig(
             os.fspath(filename), format='pdf', bbox_inches='tight', dpi=300
         )
+
+
+def write_master_log(fp_master_log, msg, do_print=True):
+    """Write to master log.
+
+    Arguments:
+        fp_master_log: The file path for the log.
+        msg: The message to write.
+        do_print (optional): Boolean indicating whether the message
+            should also be printed using standard output.
+    """
+    dt_now_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+
+    f = open(fp_master_log, 'a')
+    msg_extra = '{0} | {1}'.format(dt_now_str, msg)
+    f.write(msg_extra + '\n')
+    f.close()
+
+    if do_print:
+        print(msg_extra)
