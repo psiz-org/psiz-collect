@@ -110,6 +110,8 @@ def update_andor_request(
     pzc_pipes.pull_obs_from_host(
         host_node, project_id, fp_assets, verbose=1
     )
+    msg = 'Updated local assets.'
+    write_master_log(fp_master_log, msg)
 
     # Check for unsubmitted assignments.
     n_remain = psizcollect.amt.check_for_outstanding_assignments(
@@ -123,6 +125,8 @@ def update_andor_request(
         )
 
         if is_sufficient:
+            msg = 'Updating embedding and protocols.'
+            write_master_log(fp_master_log, msg)
             update_step(
                 compute_node, host_node, project_id, active_spec
             )
@@ -152,9 +156,9 @@ def update_andor_request(
             psizcollect.pipes.pull_hit_log_from_host(
                 host_node, project_id, fp_amt
             )
-            # Check back in one hour.  TODO
-            secs = 60 * 60
-            msg = 'Checking back in 01:00:00 ...'
+            # Check back in 30 minutes.
+            secs = 60 * 30
+            msg = 'Checking back in 00:30:00 ...'
             write_master_log(fp_master_log, msg)
             t = Timer(
                 secs, update_andor_request, args=[
