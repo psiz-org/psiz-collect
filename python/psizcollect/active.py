@@ -102,33 +102,34 @@ def update_andor_request(
     fp_hit_log = fp_amt / Path('hit-log')
     pzc_pipes.pull_hit_log_from_host(host_node, project_id, fp_amt)
 
-    # Update local assets.
-    pzc_pipes.update_obs_on_host(
-        host_node, project_id, grade_spec['mode'], grade_spec['threshold'],
-        verbose=1
-    )
-    pzc_pipes.pull_obs_from_host(
-        host_node, project_id, fp_assets, verbose=1
-    )
-    msg = 'Updated local assets.'
-    write_master_log(fp_master_log, msg)
-
     # Check for unsubmitted assignments.
     n_remain = psizcollect.amt.check_for_outstanding_assignments(
         amt_spec['profile'], True, fp_hit_log
     )
 
     if n_remain == 0:
+        # Update local assets.
+        pzc_pipes.update_obs_on_host(
+            host_node, project_id, grade_spec['mode'], grade_spec['threshold'],
+            verbose=1
+        )
+        pzc_pipes.pull_obs_from_host(
+            host_node, project_id, fp_assets, verbose=1
+        )
+        msg = 'Updated local assets.'
+        write_master_log(msg, fp_master_log)
+
         # Check if there is sufficient data.
         is_sufficient, current_total = check_if_sufficient_data(
             compute_node, active_spec, verbose=1
         )
 
         if is_sufficient:
-            msg = 'Updating embedding and protocols.'
-            write_master_log(fp_master_log, msg)
+            msg = 'Updating embedding and protocols ...'
+            write_master_log(msg, fp_master_log)
             update_step(
-                compute_node, host_node, project_id, active_spec
+                compute_node, host_node, project_id, active_spec,
+                fp_master_log=fp_master_log
             )
             n_assignment = active_spec['nAssignment']
         else:
@@ -148,7 +149,7 @@ def update_andor_request(
         if is_under_budget and is_appropriate_time:
             # Can create HIT.
             msg = 'Creating a HIT with {0} assignment(s).'.format(n_assignment)
-            write_master_log(fp_master_log, msg)
+            write_master_log(msg, fp_master_log)
             psizcollect.pipes.create_hit_on_host(
                 host_node, amt_spec['profile'], is_live=True,
                 n_assignment=n_assignment, verbose=1
@@ -159,7 +160,7 @@ def update_andor_request(
             # Check back in 30 minutes.
             secs = 60 * 30
             msg = 'Checking back in 00:30:00 ...'
-            write_master_log(fp_master_log, msg)
+            write_master_log(msg, fp_master_log)
             t = Timer(
                 secs, update_andor_request, args=[
                     compute_node, host_node, project_id, grade_spec, amt_spec,
@@ -169,18 +170,18 @@ def update_andor_request(
             t.start()
         else:
             msg = 'HIT cannot be created.'
-            write_master_log(fp_master_log, msg)
+            write_master_log(msg, fp_master_log)
             if not is_under_budget:
                 msg = '  Insufficient budget.'
-                write_master_log(fp_master_log, msg)
+                write_master_log(msg, fp_master_log)
             if not is_appropriate_time:
                 msg = '  Outside allowed time.'
-                write_master_log(fp_master_log, msg)
+                write_master_log(msg, fp_master_log)
                 # Schedule another check when inside allowed time.
                 delta_t = psizcollect.amt.wait_time(amt_spec['utcForbidden'])
 
                 msg = 'Checking back in {0} ...'.format(str(delta_t))
-                write_master_log(fp_master_log, msg)
+                write_master_log(msg, fp_master_log)
 
                 secs = delta_t.total_seconds()
                 t = Timer(
@@ -192,12 +193,12 @@ def update_andor_request(
                 t.start()
     else:
         msg = 'There are still {0} outstanding assignment(s).'.format(n_remain)
-        write_master_log(fp_master_log, msg)
+        write_master_log(msg, fp_master_log)
 
-        # Check back in 30 minutes
-        secs = 60 * 30
-        msg = 'Checking back in 00:30:00 ...'
-        write_master_log(fp_master_log, msg)
+        # Check back in 15 minutes
+        secs = 60 * 15
+        msg = 'Checking back in 00:15:00 ...'
+        write_master_log(msg, fp_master_log)
         t = Timer(
             secs, update_andor_request, args=[
                 compute_node, host_node, project_id, grade_spec, amt_spec,
@@ -297,7 +298,9 @@ def check_if_under_budget(compute_node, amt_spec, is_live=True, verbose=0):
     return is_under_budget
 
 
-def update_step(compute_node, host_node, project_id, active_spec, verbose=0):
+def update_step(
+        compute_node, host_node, project_id, active_spec, fp_master_log=None,
+        verbose=0):
     """Update step of active selection procedure."""
     fp_assets = Path(compute_node['assets'])
     fp_obs = fp_assets / Path('obs', 'obs.hdf5')
@@ -317,7 +320,8 @@ def update_step(compute_node, host_node, project_id, active_spec, verbose=0):
 
     current_round = get_current_round(fp_active, verbose=0)
     current_round = current_round + 1
-    print('    Current round: {0}'.format(current_round))
+    msg = '    Current round: {0}'.format(current_round)
+    write_master_log(msg, fp_master_log)
 
     # Archive assets.
     fp_archive = fp_active / Path('archive')
@@ -335,7 +339,8 @@ def update_step(compute_node, host_node, project_id, active_spec, verbose=0):
     # Update embedding.
     emb = update_embedding(
         obs, catalog.n_stimuli, current_round, fp_active,
-        dim_check_interval=active_spec['intervalCheckDim'], verbose=2
+        dim_check_interval=active_spec['intervalCheckDim'],
+        fp_master_log=fp_master_log, verbose=2
     )
 
     # Update samples.
@@ -403,7 +408,7 @@ def update_step(compute_node, host_node, project_id, active_spec, verbose=0):
 
 def update_embedding(
         obs, n_stimuli, current_round, fp_active, dim_check_interval=5,
-        verbose=0):
+        fp_master_log=None, verbose=0):
     """Update the embedding.
 
     Arguments:
@@ -441,7 +446,8 @@ def update_embedding(
     # Check dimensionality.
     if np.mod(current_round, dim_check_interval) == 0:
         if verbose > 0:
-            print('    Checking dimensionality...')
+            msg = '    Checking dimensionality ...'
+            write_master_log(msg, fp_master_log)
         dim_summary = psiz.dimensionality.dimension_search(
             obs, psiz.models.Exponential, n_stimuli, dim_list=range(2, 20),
             n_restart=100, n_split=10, n_fold=5, verbose=verbose
@@ -506,21 +512,22 @@ def plot_ig_summary(ig_trial, ig_random, filename):
         )
 
 
-def write_master_log(fp_master_log, msg, do_print=True):
+def write_master_log(msg, fp_master_log, do_print=True):
     """Write to master log.
 
     Arguments:
-        fp_master_log: The file path for the log.
         msg: The message to write.
+        fp_master_log: The file path for the log.
         do_print (optional): Boolean indicating whether the message
             should also be printed using standard output.
     """
     dt_now_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
 
-    f = open(fp_master_log, 'a')
-    msg_extra = '{0} | {1}'.format(dt_now_str, msg)
-    f.write(msg_extra + '\n')
-    f.close()
+    if not fp_master_log is None:
+        f = open(fp_master_log, 'a')
+        msg_extra = '{0} | {1}'.format(dt_now_str, msg)
+        f.write(msg_extra + '\n')
+        f.close()
 
     if do_print:
         print(msg_extra)
