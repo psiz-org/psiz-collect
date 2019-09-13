@@ -70,7 +70,7 @@ def get_current_round(fp_active, verbose=0):
     if not os.path.isfile(fp_log):
         current_round = 0
         f = open(fp_log, 'a')
-        f.write('round,n_dim,loss_train,loss_val\n')
+        f.write('round,n_trial,n_dim,loss_train,loss_val\n')
         f.close()
     else:
         round_history = np.loadtxt(fp_log, delimiter=',', ndmin=2, skiprows=1)
@@ -475,8 +475,8 @@ def update_embedding(
 
     # Log the dimensionality and loss.
     f = open(fp_log, 'a')
-    f.write('{0},{1},{2:.4f},{3:.4f}\n'.format(
-        current_round, n_dim_best, loss_train, loss_val
+    f.write('{0},{1},{2},{3:.4f},{4:.4f}\n'.format(
+        current_round, obs.n_trial, n_dim_best, loss_train, loss_val
     ))
     f.close()
 
