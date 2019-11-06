@@ -68,13 +68,17 @@ def get_current_round(fp_active, verbose=0):
     fp_log = fp_active / Path('log.txt')
 
     if not os.path.isfile(fp_log):
-        current_round = 0
+        current_round = -1
         f = open(fp_log, 'a')
         f.write('round,n_trial,n_dim,loss_train,loss_val\n')
         f.close()
     else:
         round_history = np.loadtxt(fp_log, delimiter=',', ndmin=2, skiprows=1)
-        current_round = int(round_history[-1, 0])
+        try:
+            current_round = int(round_history[-1, 0])
+        except:
+            current_round = -1
+        
     if verbose > 0:
         print('    Current round: {0}'.format(current_round))
 
@@ -427,13 +431,22 @@ def update_embedding(
     """
     # Settings.
     fp_log = fp_active / Path('log.txt')
+
     fp_emb = fp_active / Path('current', 'emb.hdf5')
+    if not fp_emb.parent.exists():
+        fp_emb.parent.mkdir(parents=True)
+
     fp_emb_archive = fp_active / Path(
         'archive', 'emb', 'emb_{0}.hdf5'.format(current_round)
     )
+    if not fp_emb_archive.parent.exists():
+        fp_emb_archive.parent.mkdir(parents=True)
+
     fp_dim_summary = fp_active / Path(
         'archive', 'dim', 'dim_summary_{0}.hdf5'.format(current_round)
     )
+    if not fp_dim_summary.parent.exists():
+        fp_dim_summary.parent.mkdir(parents=True)
 
     # Load last embedding or initialize to default.
     if current_round is 0:
