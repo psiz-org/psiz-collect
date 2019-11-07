@@ -52,7 +52,7 @@ import psizcollect.utils as pzc_utils
 
 
 def get_current_round(fp_active, verbose=0):
-    """Get the current round of active selection.
+    """Get the last recorded round of active selection.
 
     If the log hasn't been created also create the log.
 
@@ -61,7 +61,7 @@ def get_current_round(fp_active, verbose=0):
         verbose (optional): Verbosity of output.
 
     Returns:
-        current_round: The current round.
+        current_round: The last recorded round.
 
     """
     # Settings.
