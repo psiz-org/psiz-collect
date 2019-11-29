@@ -309,8 +309,8 @@ def update_step(
     fp_assets = Path(compute_node['assets'])
     fp_obs = fp_assets / Path('obs', 'obs.hdf5')
     fp_catalog = fp_assets / Path('catalog.hdf5')
-    fp_payload = Path(compute_node['payload'])
 
+    fp_payload = Path(compute_node['payload'])
     fp_active = Path(compute_node['active'])
 
     # Current assets.
@@ -341,6 +341,7 @@ def update_step(
     #     fp_ig_archive.mkdir(parents=True)
 
     # Update embedding.
+    # TODO Should not save embedding inside function.
     emb = update_embedding(
         obs, catalog.n_stimuli, current_round, fp_active,
         dim_check_interval=active_spec['intervalCheckDim'],
@@ -357,40 +358,16 @@ def update_step(
     # emb = psiz.models.load_embedding(fp_emb)
     # samples = pickle.load(open(fp_samples_archive, 'rb'))
 
-    # Select docket using active selection.
-    n_real_trial = pzc_utils.count_real_trials(active_spec['protocol'])
-    n_total_trial = active_spec['nProtocol'] * n_real_trial
-    active_gen = psiz.generator.ActiveShotgunGenerator(
-        n_reference=8, n_select=2,
-        n_trial_shotgun=active_spec['nTrialShotgun'], priority='entropy'
-    )
-    active_docket, ig_info = active_gen.generate(
-        n_total_trial, emb, samples, verbose=1
+    # Create protocols using active selection.
+    active_docket, ig_info, protocol_list = generate_active_protocols(
+        active_spec, emb, samples, fp_master_log=fp_master_log,
+        verbose=verbose
     )
     active_docket.save(fp_docket)
     pickle.dump(ig_info, open(fp_ig_archive, 'wb'))
-
     # active_docket = trials.load_trials(fp_docket)
     # ig_info = pickle.load(open(fp_ig_archive, 'rb'))
 
-    # TODO move to separate function.
-    # Generate a random docket of trials for comparison.
-    random_gen = psiz.generator.RandomGenerator(8, 2)
-    rand_docket = random_gen.generate(8000, catalog.n_stimuli)
-    ig_random = psiz.generator.information_gain(emb, samples, rand_docket)
-
-    # Summary plots.
-    ig_trial = ig_info['ig_trial']
-    fp_fig_ig = fp_active / Path(
-        'archive', 'ig', 'ig_info_{0}.pdf'.format(current_round)
-    )
-    plot_ig_summary(ig_trial, ig_random, fp_fig_ig)
-
-    # Create protocols.
-    protocol_list = pzc_utils.create_protocol_set(
-        active_spec['protocol'], active_spec['nProtocol'], active_docket,
-        catalog.n_stimuli
-    )
     # Save new protocols.
     for idx, curr_protocol in enumerate(protocol_list):
         fp_protocol = fp_payload / Path(
@@ -408,6 +385,17 @@ def update_step(
 
     # Sync payload.
     pzc_pipes.sync_payload(fp_payload, host_node, project_id)
+
+    # TODO Move summary plots to separate function.
+    # Generate a random docket of trials for comparison.
+    random_gen = psiz.generator.RandomGenerator(8, 2)
+    rand_docket = random_gen.generate(8000, catalog.n_stimuli)
+    ig_random = psiz.generator.information_gain(emb, samples, rand_docket)
+    ig_trial = ig_info['ig_trial']
+    fp_fig_ig = fp_active / Path(
+        'archive', 'ig', 'ig_info_{0}.pdf'.format(current_round)
+    )
+    plot_ig_summary(ig_trial, ig_random, fp_fig_ig)
 
 
 def update_embedding(
@@ -494,6 +482,28 @@ def update_embedding(
     f.close()
 
     return emb
+
+
+def generate_active_protocols(
+        active_spec, emb, samples, fp_master_log=None, verbose=0):
+    """Generate protocols using active selection."""
+    n_real_trial = pzc_utils.count_real_trials(active_spec['protocol'])
+    n_total_trial = active_spec['nProtocol'] * n_real_trial
+    active_gen = psiz.generator.ActiveShotgunGenerator(
+        n_reference=8, n_select=2,
+        n_trial_shotgun=active_spec['nTrialShotgun'], priority='entropy'
+    )
+    active_docket, ig_info = active_gen.generate(
+        n_total_trial, emb, samples, verbose=1
+    )
+
+    # Create protocols.
+    protocol_list = pzc_utils.create_protocol_set(
+        active_spec['protocol'], active_spec['nProtocol'], active_docket,
+        emb.n_stimuli
+    )
+
+    return active_docket, ig_info, protocol_list
 
 
 def plot_ig_summary(ig_trial, ig_random, filename):
