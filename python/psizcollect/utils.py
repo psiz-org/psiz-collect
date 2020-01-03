@@ -36,7 +36,7 @@ import numpy as np
 
 
 def docket_message(fname):
-    """Create appropiately formated message for docket."""
+    """Create appropriately formated message for docket."""
     msg = {
         "content": "message",
         "fname": fname
