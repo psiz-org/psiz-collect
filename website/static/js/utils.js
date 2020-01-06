@@ -209,7 +209,8 @@ function pad(n, width, z) {
 }
 
 function clientTimestamp() {
+    // Note that d.getMonth() is zero-based.
     var d = new Date();
-    timestampStr = "" + d.getFullYear() + "-" + pad(d.getMonth(),2) + "-" + pad(d.getDate(), 2) + " " + pad(d.getHours(), 2) + ":" + pad(d.getMinutes(), 2) + ":" + pad(d.getSeconds(), 2);
+    timestampStr = "" + d.getFullYear() + "-" + pad(d.getMonth() + 1,2) + "-" + pad(d.getDate(), 2) + " " + pad(d.getHours(), 2) + ":" + pad(d.getMinutes(), 2) + ":" + pad(d.getSeconds(), 2);
     return timestampStr;
 }

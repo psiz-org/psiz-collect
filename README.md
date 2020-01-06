@@ -181,7 +181,7 @@ can have multiple blockSpec
 
 shuffle: shuffle order of trials
     shuffle (should this always occur? no, because of spacing for catch trials
-* Stimuli are reference by their index of occurence in `stimuli.txt`. The index is assumed to start at 0 and go to N-1 where N indicates the total number of stimuli listed in `stimuli.txt`.
+* Stimuli are reference by their index of occurrence in `stimuli.txt`. The index is assumed to start at 0 and go to N-1 where N indicates the total number of stimuli listed in `stimuli.txt`.
 * protocol names MUST follow the format `protocol*.json` in order to be detected. The `*` character indicates the typical wildcard format.
 * protocols no longer in use, can be removed from the EXPERIMENT_DIR. Doing so may
     improve page loading speed for subjects if there are hundreds of protocols.

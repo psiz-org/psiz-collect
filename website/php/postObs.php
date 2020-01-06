@@ -12,7 +12,7 @@ function insertTrial($stmt, $type, $assignmentId, $page) {
         $isCatch = 0;
     }
 
-    mysqli_stmt_bind_param(
+    $bindStatus = mysqli_stmt_bind_param(
         $stmt, $type, $assignmentId, $page["nSelect"], $page["isRanked"],
         $page["query"],
         $page["references"][0], $page["references"][1],
@@ -28,9 +28,9 @@ function insertTrial($stmt, $type, $assignmentId, $page) {
         $page["choiceRtMs"][4], $page["choiceRtMs"][5], $page["choiceRtMs"][6], 
         $page["choiceRtMs"][7], $page["submitRtMs"], $isCatch
     );
-    mysqli_stmt_execute($stmt);
-    mysqli_stmt_free_result($stmt);
-    return $page["startTimeMs"];
+    $executeStatus = mysqli_stmt_execute($stmt);
+    // $errorMsg = mysqli_stmt_error($stmt);
+    return $executeStatus;
 }
 
 /**
@@ -40,11 +40,13 @@ function updateAssignmentStatus($link, $assignmentId) {
     $query = "UPDATE assignment SET status_code = 1, end_hit = CURRENT_TIME() WHERE assignment_id=?";
     $type = "i";
     $stmt = mysqli_prepare($link, $query);
-    mysqli_stmt_bind_param(
+    $bindStatus = mysqli_stmt_bind_param(
         $stmt, $type, $assignmentId
     );
-    mysqli_stmt_execute($stmt);
+    $executeStatus = mysqli_stmt_execute($stmt);
+    // $errorMsg = mysqli_stmt_error($stmt);
     mysqli_stmt_close($stmt);
+    return $executeStatus;
 }
 
 $dirCollect = getenv('DIR_COLLECT');
@@ -80,17 +82,22 @@ $nPage = count($docket);
 foreach ($docket as &$page) {
     switch ($page["content"]) {
         case "trial":
-            $str = insertTrial($stmt, $type, $assignmentId, $page);
+            $insertStatement = insertTrial($stmt, $type, $assignmentId, $page);
             break;
     }
 }
 mysqli_stmt_close($stmt);
 
-updateAssignmentStatus($link, $assignmentId);
+$updateStatement = updateAssignmentStatus($link, $assignmentId);
 mysqli_close($link);
 
 $returnMessage = array(
     "status"=>1
 );
+// $returnMessage = array(
+//     "status"=>1,
+//     "updateStatement"=>$updateStatement,
+//     "insertStatement"=>$insertStatement
+// );
 echo json_encode($returnMessage);
 ?>
