@@ -33,6 +33,7 @@ from pathlib import Path
 
 import boto3
 import numpy as np
+import pandas
 import paramiko
 
 
@@ -503,3 +504,28 @@ def determine_amt_commission_rate(n_max_assignment):
     if n_max_assignment > 9:
         amt_commision = .4
     return amt_commision
+
+
+def assign_qualification(aws_profile, is_live, worker_id, qualification_id, int_val=0):
+    """Assign qualification to worker.
+
+    Arguments:
+        aws_profile: A string indicating the AWS profile.
+        is_live: A boolean indicating if the HIT is live or not.
+        worker_id: A string indicating the worker ID.
+        qualification_id: A string indicating the qualification ID.
+
+    """
+    int_val = int(int_val)
+
+    # Create AMT client.
+    session = boto3.Session(profile_name=aws_profile)
+    amt_client = session.client(
+        'mturk', endpoint_url=get_endpoint_url(is_live)
+    )
+    response = client.associate_qualification_with_worker(
+        QualificationTypeId=qualification_id,
+        WorkerId=worker_id,
+        IntegerValue=int_val,
+        SendNotification=False
+    )
