@@ -267,6 +267,7 @@ def assemble_accepted_obs(
     obs = None
     dict_meta = {
         'assignment_id': df_assignment['assignment_id'].values,
+        'worker_id': df_assignment['worker_id'].values,
         'agent_id': np.zeros([n_assignment], dtype=int),
         'session_id': np.zeros([n_assignment], dtype=int),
         'protocol_id': df_assignment['protocol_id'].values,
