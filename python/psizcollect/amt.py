@@ -523,7 +523,7 @@ def assign_qualification(aws_profile, is_live, worker_id, qualification_id, int_
     amt_client = session.client(
         'mturk', endpoint_url=get_endpoint_url(is_live)
     )
-    response = client.associate_qualification_with_worker(
+    response = amt_client.associate_qualification_with_worker(
         QualificationTypeId=qualification_id,
         WorkerId=worker_id,
         IntegerValue=int_val,
