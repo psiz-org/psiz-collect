@@ -42,7 +42,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import psiz.datasets
+import psiz.catalog
 import psiz.dimensionality
 import psiz.generator
 import psiz.models
@@ -319,7 +319,7 @@ def update_step(
         fp_current.mkdir(parents=True)
     fp_docket = fp_current / Path('docket.hdf5')
 
-    catalog = psiz.datasets.load_catalog(fp_catalog)
+    catalog = psiz.catalog.load_catalog(fp_catalog)
     obs = psiz.trials.load_trials(fp_obs)
 
     current_round = get_current_round(fp_active, verbose=0)

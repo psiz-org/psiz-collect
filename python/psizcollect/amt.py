@@ -49,7 +49,7 @@ def create_hit(
         is_live:
         fp_log:
     """
-    if (n_assignment > 0) and (n_assignment <= 9):  # TODO safety check.
+    if (n_assignment > 0) and (n_assignment <= 9):
         # Load AMT configuration file.
         with open(fp_hit_config) as f:
             hit_cfg = json.load(f)
@@ -57,8 +57,10 @@ def create_hit(
         # Set path for HIT log.
         if fp_log is None:
             fp_log = Path.home() / Path('.amt-voucher', 'logs')
+            if not fp_log.exists():
+                fp_log.mkdir(parents=True)
         else:
-            fp_log = Path(fp_log)  # TODO check if exists.
+            fp_log = Path(fp_log)
 
         # Create AMT client.
         session = boto3.Session(profile_name=aws_profile)
@@ -71,6 +73,148 @@ def create_hit(
         response = amt_client.create_hit(
             MaxAssignments=n_assignment,
             # AutoApprovalDelayInSeconds=123,
+            LifetimeInSeconds=hit_cfg['LifetimeInSeconds'],
+            AssignmentDurationInSeconds=hit_cfg['AssignmentDurationInSeconds'],
+            Reward=hit_cfg['Reward'],
+            Title=hit_cfg['Title'],
+            Keywords=hit_cfg['Keywords'],
+            Description=hit_cfg['Description'],
+            Question=question_xml,
+            # RequesterAnnotation='string',
+            QualificationRequirements=hit_cfg['QualificationRequirements'],
+            # UniqueRequestToken='string',
+            # AssignmentReviewPolicy={
+            #     'PolicyName': 'string',
+            #     'Parameters': [
+            #         {
+            #             'Key': 'string',
+            #             'Values': [
+            #                 'string',
+            #             ],
+            #             'MapEntries': [
+            #                 {
+            #                     'Key': 'string',
+            #                     'Values': [
+            #                         'string',
+            #                     ]
+            #                 },
+            #             ]
+            #         },
+            #     ]
+            # },
+            # HITReviewPolicy={
+            #     'PolicyName': 'string',
+            #     'Parameters': [
+            #         {
+            #             'Key': 'string',
+            #             'Values': [
+            #                 'string',
+            #             ],
+            #             'MapEntries': [
+            #                 {
+            #                     'Key': 'string',
+            #                     'Values': [
+            #                         'string',
+            #                     ]
+            #                 },
+            #             ]
+            #         },
+            #     ]
+            # },
+            # HITLayoutId='string',
+            # HITLayoutParameters=[
+            #     {
+            #         'Name': 'string',
+            #         'Value': 'string'
+            #     },
+            # ]
+        )
+        hit_id = response['HIT']['HITId']
+
+        # Record the creation of the HIT.
+        write_to_log(fp_log, aws_profile, is_live, hit_id, fp_hit_config)
+
+        if verbose > 0:
+            if is_live:
+                print(
+                    "    Created live HIT {0}: {1} assignment(s)".format(
+                        hit_id, n_assignment
+                    )
+                )
+            else:
+                print(
+                    "    Created sandbox HIT {0}: {1} assignment(s)".format(
+                        hit_id, n_assignment
+                    )
+                )
+    else:
+        print("Cannot create HIT with {0} assignment(s).".format(n_assignment))
+
+
+def create_fake_hit(
+        fp_hit_config, aws_profile, n_assignment, is_live, fp_log=None,
+        verbose=0):
+    """Create AMT HIT using the provided hit configuration file.
+
+    Arguments:
+        fp_hit_config:
+        aws_profile:
+        n_assignment:
+        is_live:
+        fp_log:
+    """
+    if (n_assignment > 0) and (n_assignment <= 9):
+        # Load AMT configuration file.
+        with open(fp_hit_config) as f:
+            hit_cfg = json.load(f)
+
+        # Set path for HIT log.
+        if fp_log is None:
+            fp_log = Path.home() / Path('.amt-voucher', 'logs')
+            if not fp_log.exists():
+                fp_log.mkdir(parents=True)
+        else:
+            fp_log = Path(fp_log)
+
+        # Create AMT client.
+        session = boto3.Session(profile_name=aws_profile)
+        amt_client = session.client(
+            'mturk', endpoint_url=get_endpoint_url(is_live)
+        )
+
+        # Create the HIT.
+        question_xml = (
+            '<?xml version="1.0" encoding="UTF-8"?>'
+            '<QuestionForm xmlns="http://mechanicalturk.amazonaws.com/AWSMechanicalTurkDataSchemas/2017-11-06/QuestionForm.xsd">'
+            '<Overview>'
+            '<Title>Fake HIT</Title>'
+            '<Text>Please answer the following question. Your HIT will be automatically approved regardless of your answer.</Text>'
+            '</Overview>'
+            '<Question>'
+            '<QuestionIdentifier>question_0</QuestionIdentifier>'
+            '<QuestionContent><Text>Who shot first?</Text></QuestionContent>'
+            '<AnswerSpecification>'
+            '<SelectionAnswer>'
+            '<StyleSuggestion>radiobutton</StyleSuggestion>'
+            '<Selections>'
+            '<Selection>'
+            '<SelectionIdentifier>han</SelectionIdentifier>'
+            '<Text>Han Solo</Text>'
+            '</Selection>'
+            '<Selection>'
+            '<SelectionIdentifier>greedo</SelectionIdentifier>'
+            '<Text>Greedo</Text>'
+            '</Selection>'
+            '</Selections>'
+            '</SelectionAnswer>'
+            '</AnswerSpecification>'
+            '</Question>'
+            '</QuestionForm>'
+        )
+
+        response = amt_client.create_hit(
+            MaxAssignments=n_assignment,
+            AutoApprovalDelayInSeconds=5,
             LifetimeInSeconds=hit_cfg['LifetimeInSeconds'],
             AssignmentDurationInSeconds=hit_cfg['AssignmentDurationInSeconds'],
             Reward=hit_cfg['Reward'],

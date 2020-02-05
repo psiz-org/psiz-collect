@@ -46,7 +46,6 @@ import pandas as pd
 import paramiko
 import psiz.trials
 import psiz.preprocess
-import psiz.datasets
 
 # Consants used/assumed in the MySQL database.
 STATUS_CREATED = 0  # Incomplete and not expired.
