@@ -470,7 +470,9 @@ def update_embedding(
     # Quickly finetune existing embedding (if possible).
     n_group = np.max(obs.group_id) + 1
     can_finetune = (
-        (n_dim_best == n_dim_last) and (n_group == n_group_last) and (n_stimuli == n_stimuli_last)
+        (n_dim_best == n_dim_last) and
+        (n_group == n_group_last) and
+        (n_stimuli == n_stimuli_last)
     )
     if can_finetune:
         loss_train, loss_val = emb.fit(
@@ -564,7 +566,7 @@ def write_master_log(msg, fp_master_log, do_print=True):
     dt_now_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
     msg_extra = '{0} | {1}'.format(dt_now_str, msg)
 
-    if not fp_master_log is None:
+    if fp_master_log is not None:
         f = open(fp_master_log, 'a')
         f.write(msg_extra + '\n')
         f.close()
