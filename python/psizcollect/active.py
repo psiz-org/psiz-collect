@@ -450,7 +450,8 @@ def update_embedding(
     else:
         emb = psiz.models.load_embedding(fp_emb)
     n_dim_last = emb.n_dim
-    # n_group_last = emb.n_group TODO
+    n_group_last = emb.n_group
+    n_stimuli_last = emb.n_stimuli
 
     # Check dimensionality.
     if np.mod(current_round, dim_check_interval) == 0:
@@ -466,9 +467,12 @@ def update_embedding(
     else:
         n_dim_best = n_dim_last
 
-    if n_dim_best == n_dim_last:
-        # TODO need to initialize if n_group changes.
-        # Quickly finetune existing embedding.
+    # Quickly finetune existing embedding (if possible).
+    n_group = np.max(obs.group_id) + 1
+    can_finetune = (
+        (n_dim_best == n_dim_last) and (n_group == n_group_last) and (n_stimuli == n_stimuli_last)
+    )
+    if can_finetune:
         loss_train, loss_val = emb.fit(
             obs, n_restart=10, init_mode='hot', verbose=2
         )
