@@ -78,7 +78,7 @@ def get_current_round(fp_active, verbose=0):
             current_round = int(round_history[-1, 0])
         except:
             current_round = -1
-        
+
     if verbose > 0:
         print('    Current round: {0}'.format(current_round))
 
@@ -106,7 +106,7 @@ def update_andor_request(
     fp_hit_log = fp_amt / Path('hit-log')
     pzc_pipes.pull_hit_log_from_host(host_node, project_id, fp_amt)
 
-    # Check for unsubmitted assignments.
+    # Check for un-submitted assignments.
     n_remain = psizcollect.amt.check_for_outstanding_assignments(
         amt_spec['profile'], True, fp_hit_log
     )
@@ -129,8 +129,6 @@ def update_andor_request(
         )
 
         if is_sufficient:
-            msg = 'Updating embedding and protocols ...'
-            write_master_log(msg, fp_master_log)
             update_step(
                 compute_node, host_node, project_id, active_spec,
                 fp_master_log=fp_master_log
@@ -308,7 +306,7 @@ def update_step(
     """Update step of active selection procedure."""
     fp_assets = Path(compute_node['assets'])
     fp_obs = fp_assets / Path('obs', 'obs.hdf5')
-    fp_catalog = fp_assets / Path('catalog.hdf5')
+    fp_catalog = Path(compute_node['catalog'])
 
     fp_payload = Path(compute_node['payload'])
     fp_active = Path(compute_node['active'])
@@ -327,7 +325,7 @@ def update_step(
     msg = '    Current round: {0}'.format(current_round)
     write_master_log(msg, fp_master_log)
 
-    # Archive assets.
+    # Archive asset filepaths.
     fp_archive = fp_active / Path('archive')
     fp_samples_archive = fp_archive / Path('samples', 'samples_{0}.p'.format(
         current_round
@@ -349,6 +347,8 @@ def update_step(
     )
 
     # Update samples.
+    msg = 'Sampling from posterior ...'
+    write_master_log(msg, fp_master_log)
     samples = emb.posterior_samples(
             obs, n_final_sample=1000, n_burn=100, thin_step=10, verbose=1
     )
@@ -359,6 +359,8 @@ def update_step(
     # samples = pickle.load(open(fp_samples_archive, 'rb'))
 
     # Create protocols using active selection.
+    msg = 'Updating protocols ...'
+    write_master_log(msg, fp_master_log)
     active_docket, ig_info, protocol_list = generate_active_protocols(
         active_spec, emb, samples, fp_master_log=fp_master_log,
         verbose=verbose
@@ -419,6 +421,9 @@ def update_embedding(
         emb: Updated embedding.
 
     """
+    msg = 'Updating embedding ...'
+    write_master_log(msg, fp_master_log)
+
     # Settings.
     fp_log = fp_active / Path('log.txt')
 
@@ -445,6 +450,7 @@ def update_embedding(
     else:
         emb = psiz.models.load_embedding(fp_emb)
     n_dim_last = emb.n_dim
+    # n_group_last = emb.n_group TODO
 
     # Check dimensionality.
     if np.mod(current_round, dim_check_interval) == 0:
@@ -461,7 +467,8 @@ def update_embedding(
         n_dim_best = n_dim_last
 
     if n_dim_best == n_dim_last:
-        # Finetune existing embedding.
+        # TODO need to initialize if n_group changes.
+        # Quickly finetune existing embedding.
         loss_train, loss_val = emb.fit(
             obs, n_restart=10, init_mode='hot', verbose=2
         )
@@ -551,10 +558,10 @@ def write_master_log(msg, fp_master_log, do_print=True):
             should also be printed using standard output.
     """
     dt_now_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+    msg_extra = '{0} | {1}'.format(dt_now_str, msg)
 
     if not fp_master_log is None:
         f = open(fp_master_log, 'a')
-        msg_extra = '{0} | {1}'.format(dt_now_str, msg)
         f.write(msg_extra + '\n')
         f.close()
 
