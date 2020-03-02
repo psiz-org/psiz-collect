@@ -320,12 +320,10 @@ def update_step(
     catalog = psiz.catalog.load_catalog(fp_catalog)
     obs = psiz.trials.load_trials(fp_obs)
 
-    # TODO critical
-    current_round = 120
-    # current_round = get_current_round(fp_active, verbose=0)
-    # current_round = current_round + 1
-    # msg = '    Current round: {0}'.format(current_round)
-    # write_master_log(msg, fp_master_log)
+    current_round = get_current_round(fp_active, verbose=0)
+    current_round = current_round + 1
+    msg = '    Current round: {0}'.format(current_round)
+    write_master_log(msg, fp_master_log)
 
     # Archive asset filepaths.
     fp_archive = fp_active / Path('archive')
@@ -341,15 +339,14 @@ def update_step(
     #     fp_ig_archive.mkdir(parents=True)
 
     # Update embedding.
-    # TODO CRITICAL
-    fp_emb = fp_current / Path('emb.hdf5')
-    emb = psiz.models.load_embedding(fp_emb)
+    # fp_emb = fp_current / Path('emb.hdf5')
+    # emb = psiz.models.load_embedding(fp_emb)
     # TODO Should not save embedding inside function.
-    # emb = update_embedding(
-    #     obs, catalog.n_stimuli, current_round, fp_active,
-    #     dim_check_interval=active_spec['intervalCheckDim'],
-    #     fp_master_log=fp_master_log, verbose=2
-    # )
+    emb = update_embedding(
+        obs, catalog.n_stimuli, current_round, fp_active,
+        dim_check_interval=active_spec['intervalCheckDim'],
+        fp_master_log=fp_master_log, verbose=2
+    )
 
     # Update samples.
     # samples = pickle.load(open(fp_samples_archive, 'rb'))
@@ -392,16 +389,16 @@ def update_step(
 
     # TODO Move summary plots to separate function.
     # Generate a random docket of trials for comparison.
-    random_gen = psiz.generator.RandomGenerator(
-        catalog.n_stimuli, n_reference=8, n_select=2
-    )
-    rand_docket = random_gen.generate(8000)
-    ig_random = psiz.generator.information_gain(emb, samples, rand_docket)
-    ig_trial = ig_info['ig_trial']
-    fp_fig_ig = fp_active / Path(
-        'archive', 'ig', 'ig_info_{0}.pdf'.format(current_round)
-    )
-    plot_ig_summary(ig_trial, ig_random, fp_fig_ig)
+    # random_gen = psiz.generator.RandomGenerator(
+    #     catalog.n_stimuli, n_reference=8, n_select=2
+    # )
+    # rand_docket = random_gen.generate(8000)
+    # ig_random = psiz.generator.information_gain(emb, samples, rand_docket)
+    # ig_trial = ig_info['ig_trial']
+    # fp_fig_ig = fp_active / Path(
+    #     'archive', 'ig', 'ig_info_{0}.pdf'.format(current_round)
+    # )
+    # plot_ig_summary(ig_trial, ig_random, fp_fig_ig)
 
 
 def update_embedding(
