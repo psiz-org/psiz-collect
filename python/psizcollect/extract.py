@@ -318,6 +318,8 @@ def assemble_accepted_obs(
                     obs_agent, grade_mode=grade_mode
                 )
             )
+            # Weight observations by average catch trial grade.
+            obs_agent.weight = avg_grade * np.ones([obs_agent.n_trial])
             dict_meta['n_catch'][idx] = np.sum(is_catch)
             dict_meta['grade'][idx] = avg_grade
 
