@@ -339,7 +339,7 @@ def write_to_log(
 
 
 def check_for_outstanding_assignments(
-        aws_profile, is_live, fp_log=None, verbose=0):
+        aws_profile, is_live, fp_log=None, n_last=10, verbose=0):
     """Check for HITs that are not done.
 
     Check for pending or available assignments.
@@ -348,6 +348,7 @@ def check_for_outstanding_assignments(
         aws_profile:
         is_live:
         fp_log:
+        n_last: The number of most recent HITs to check.
         verbose (optional):
 
     Returns:
@@ -371,6 +372,7 @@ def check_for_outstanding_assignments(
         fp_log = Path(fp_log)
         fp_hit_log = get_hit_log_filepath(fp_log, aws_profile, is_live)
         hit_id_list = get_log_hits(fp_hit_log)
+    hit_id_list = hit_id_list[-n_last:]
 
     # Check HITs.
     n_remain_total = 0
