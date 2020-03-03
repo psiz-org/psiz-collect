@@ -104,14 +104,15 @@ def update_andor_request(
     fp_assets = Path(compute_node['assets'])
     fp_amt = Path(compute_node['amt'])
     fp_hit_log = fp_amt / Path('hit-log')
+
     pzc_pipes.pull_hit_log_from_host(host_node, project_id, fp_amt)
 
-    # Check for un-submitted assignments.
-    n_remain = psizcollect.amt.check_for_outstanding_assignments(
+    # Check if still waiting on any assignments.
+    n_waiting = psizcollect.amt.check_for_outstanding_assignments(
         amt_spec['profile'], True, fp_hit_log
     )
 
-    if n_remain == 0:
+    if n_waiting == 0:
         # Update local assets.
         pzc_pipes.update_obs_on_host(
             host_node, project_id, grade_spec['mode'], grade_spec['threshold'],
@@ -194,7 +195,7 @@ def update_andor_request(
                 )
                 t.start()
     else:
-        msg = 'There are still {0} outstanding assignment(s).'.format(n_remain)
+        msg = 'There are still {0} outstanding assignment(s).'.format(n_waiting)
         write_master_log(msg, fp_master_log)
 
         # Check back in 15 minutes
