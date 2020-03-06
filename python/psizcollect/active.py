@@ -195,7 +195,9 @@ def update_andor_request(
                 )
                 t.start()
     else:
-        msg = 'There are still {0} outstanding assignment(s).'.format(n_waiting)
+        msg = 'There are still {0} outstanding assignment(s).'.format(
+            n_waiting
+        )
         write_master_log(msg, fp_master_log)
 
         # Check back in 15 minutes

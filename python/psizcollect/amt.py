@@ -36,6 +36,7 @@ import numpy as np
 import pandas
 import paramiko
 
+# TODO must refactor code to handle fact that HIT info is expired on AMT servers.
 
 def create_hit(
         fp_hit_config, aws_profile, n_assignment, is_live, fp_log=None,
