@@ -392,16 +392,16 @@ def update_step(
 
     # TODO Move summary plots to separate function.
     # Generate a random docket of trials for comparison.
-    # random_gen = psiz.generator.RandomGenerator(
-    #     catalog.n_stimuli, n_reference=8, n_select=2
-    # )
-    # rand_docket = random_gen.generate(8000)
-    # ig_random = psiz.generator.information_gain(emb, samples, rand_docket)
-    # ig_trial = ig_info['ig_trial']
-    # fp_fig_ig = fp_active / Path(
-    #     'archive', 'ig', 'ig_info_{0}.pdf'.format(current_round)
-    # )
-    # plot_ig_summary(ig_trial, ig_random, fp_fig_ig)
+    random_gen = psiz.generator.RandomGenerator(
+        catalog.n_stimuli, n_reference=8, n_select=2
+    )
+    rand_docket = random_gen.generate(8000)
+    ig_random = psiz.generator.information_gain(emb, samples, rand_docket)
+    ig_trial = ig_info['ig_trial']
+    fp_fig_ig = fp_active / Path(
+        'archive', 'ig', 'ig_info_{0}.pdf'.format(current_round)
+    )
+    plot_ig_summary(ig_trial, ig_random, fp_fig_ig)
 
 
 def update_embedding(
