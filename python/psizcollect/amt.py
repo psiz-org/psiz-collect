@@ -586,6 +586,8 @@ def wait_time(utc_forbidden):
     else:
         utc_next = dt_now
         utc_next = utc_next.replace(hour=utc_allowed_future[0])
+        utc_next = utc_next.replace(minute=0)
+        utc_next = utc_next.replace(second=1)
 
     delta_t = utc_next - dt_now
     return delta_t
