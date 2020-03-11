@@ -27,10 +27,10 @@ Functions:
     observation_summary:
     protocol_summary:
     warning_summary:
-    pull_obs_from_host:
-    sync_payload:
+    pull_obs:
+    push_payload:
     create_hit_on_host:
-    pull_hit_log_from_host:
+    pull_hit_log:
     review_vouchers_on_host:
 """
 
@@ -65,6 +65,7 @@ def update_obs_on_host(
         grade_mode:
         grade_threshold;
         verbose (optional):
+
     """
     # Connect.
     client = paramiko.SSHClient()
@@ -89,6 +90,36 @@ def update_obs_on_host(
         print(stdout.readlines())
         print(stderr.readlines())
     client.close()
+
+
+def pull_obs(host_node, project_id, fp_assets, verbose=0):
+    """Pull observations from host to local machine.
+
+    Arguments:
+        host_node:
+        project_id:
+        fp_assets:
+        verbose (optional):
+
+    """
+    fp_obs = fp_assets / Path('obs')
+    if not fp_obs.exists():
+        fp_obs.mkdir(parents=True)
+
+    cmd = 'scp {0}@{1}:.psiz-collect/projects/{2}/obs.hdf5 {3}/'.format(
+        host_node["user"], host_node["ip"], project_id, os.fspath(fp_obs)
+    )
+    subprocess.run(cmd, shell=True)
+
+    cmd = 'scp {0}@{1}:.psiz-collect/projects/{2}/meta.txt {3}/'.format(
+        host_node["user"], host_node["ip"], project_id, os.fspath(fp_obs)
+    )
+    subprocess.run(cmd, shell=True)
+
+    cmd = 'scp {0}@{1}:.psiz-collect/projects/{2}/summary.txt {3}/'.format(
+        host_node["user"], host_node["ip"], project_id, os.fspath(fp_obs)
+    )
+    subprocess.run(cmd, shell=True)
 
 
 def write_metadata(meta, fp_meta):
@@ -316,30 +347,8 @@ def warning_summary(obs, meta):
     return msg
 
 
-def pull_obs_from_host(host_node, project_id, fp_assets, verbose=0):
-    """Pull observations from host to local machine."""
-    fp_obs = fp_assets / Path('obs')
-    if not fp_obs.exists():
-        fp_obs.mkdir(parents=True)
-
-    cmd = 'scp {0}@{1}:.psiz-collect/projects/{2}/obs.hdf5 {3}/'.format(
-        host_node["user"], host_node["ip"], project_id, os.fspath(fp_obs)
-    )
-    subprocess.run(cmd, shell=True)
-
-    cmd = 'scp {0}@{1}:.psiz-collect/projects/{2}/meta.txt {3}/'.format(
-        host_node["user"], host_node["ip"], project_id, os.fspath(fp_obs)
-    )
-    subprocess.run(cmd, shell=True)
-
-    cmd = 'scp {0}@{1}:.psiz-collect/projects/{2}/summary.txt {3}/'.format(
-        host_node["user"], host_node["ip"], project_id, os.fspath(fp_obs)
-    )
-    subprocess.run(cmd, shell=True)
-
-
-def sync_payload(fp_payload, host_node, project_id):
-    """Sync project payload with server."""
+def push_payload(fp_payload, host_node, project_id):
+    """Push (via rsync) project payload to host server."""
     cmd = (
         "rsync -rtzi --exclude 'retired' {0}/ {1}@{2}:{3}/{4}/ --delete"
     ).format(
@@ -378,7 +387,7 @@ def create_hit_on_host(
     client.close()
 
 
-def pull_hit_log_from_host(host_node, project_id, fp_amt):
+def pull_hit_log(host_node, project_id, fp_amt):
     """Pull all project HIT logs from host node."""
     cmd = (
         'scp -r {0}@{1}:.psiz-collect/projects/{2}/amt/hit-log/* {3}/hit-log/'

@@ -269,7 +269,8 @@ def assemble_accepted_obs(
         'assignment_id': df_assignment['assignment_id'].values,
         'worker_id': df_assignment['worker_id'].values,
         'agent_id': np.zeros([n_assignment], dtype=int),
-        'session_id': np.zeros([n_assignment], dtype=int),
+        'session_id': df_assignment['assignment_id'].values,
+        'session_count': np.zeros([n_assignment], dtype=int),
         'protocol_id': df_assignment['protocol_id'].values,
         'status_code': df_assignment['status_code'].values,
         'duration_hit_min': df_assignment['duration_hit_min'].values,
@@ -287,7 +288,7 @@ def assemble_accepted_obs(
         )
         agent_id = unique_agent_id_list[agent_loc]
         dict_meta['agent_id'][idx] = agent_id
-        dict_meta['session_id'][idx] = copy.copy(agent_id_counter[agent_loc])
+        dict_meta['session_count'][idx] = copy.copy(agent_id_counter[agent_loc])
         agent_id_counter[agent_loc] = agent_id_counter[agent_loc] + 1
 
     query_trial = (
@@ -400,6 +401,7 @@ def update_status(my_cxn, assignment_id, status_code):
         my_cxn: A connection to a MySQL database.
         assignment_id: The assignment to update.
         status_code: The status code to apply.
+
     """
     # query = (
     #     "SELECT status_code FROM assignment WHERE assignment_id={1:d}"

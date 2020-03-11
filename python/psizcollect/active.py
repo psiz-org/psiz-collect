@@ -31,10 +31,12 @@ Functions:
 """
 
 from datetime import datetime, timedelta
+from glob import glob
 import json
 import os
 from pathlib import Path
 import pickle
+import re
 import subprocess
 from threading import Timer
 
@@ -47,7 +49,7 @@ import psiz.dimensionality
 import psiz.generator
 import psiz.models
 import psizcollect.amt
-import psizcollect.pipes as pzc_pipes
+import psizcollect.pipes as pzc_host
 import psizcollect.utils as pzc_utils
 
 
@@ -99,13 +101,17 @@ def update_andor_request(
         grade_spec:
         amt_spec:
         active_spec:
+
     """
     fp_master_log = Path(compute_node['masterLog'])
     fp_assets = Path(compute_node['assets'])
+    fp_obs = fp_assets / Path('obs', 'obs_train.hdf5')
+    fp_meta = fp_assets / Path('obs', 'meta.txt')
     fp_amt = Path(compute_node['amt'])
+    fp_active = Path(compute_node['active'])
     fp_hit_log = fp_amt / Path('hit-log')
 
-    pzc_pipes.pull_hit_log_from_host(host_node, project_id, fp_amt)
+    pzc_host.pull_hit_log(host_node, project_id, fp_amt)
 
     # Check if still waiting on any assignments.
     n_waiting = psizcollect.amt.check_for_outstanding_assignments(
@@ -114,25 +120,34 @@ def update_andor_request(
 
     if n_waiting == 0:
         # Update local assets.
-        pzc_pipes.update_obs_on_host(
+        pzc_host.update_obs_on_host(
             host_node, project_id, grade_spec['mode'], grade_spec['threshold'],
             verbose=1
         )
-        pzc_pipes.pull_obs_from_host(
+        pzc_host.pull_obs(
             host_node, project_id, fp_assets, verbose=1
         )
         msg = 'Updated local assets.'
         write_master_log(msg, fp_master_log)
 
+        # Load local assets.
+        df_meta = pd.read_csv(fp_meta)
+
         # Check if there is sufficient data.
+        current_round = get_current_round(fp_active, verbose=0)
+        pattern = 'protocol_a_{0}-.*'.format(current_round)
         is_sufficient, current_total = check_if_sufficient_data(
-            compute_node, active_spec, verbose=1
+            df_meta, pattern, active_spec, verbose=1
         )
 
         if is_sufficient:
+            obs_train = psiz.trials.load_trials(fp_obs)
             update_step(
-                compute_node, host_node, project_id, active_spec,
+                obs_train, compute_node, project_id, active_spec,
                 fp_master_log=fp_master_log
+            )
+            pzc_host.push_payload(
+                compute_node['payload'], host_node, project_id
             )
             n_assignment = active_spec['nAssignment']
         else:
@@ -157,7 +172,7 @@ def update_andor_request(
                 host_node, amt_spec['profile'], is_live=True,
                 n_assignment=n_assignment, verbose=1
             )
-            psizcollect.pipes.pull_hit_log_from_host(
+            psizcollect.pipes.pull_hit_log(
                 host_node, project_id, fp_amt
             )
             # Check back in 30 minutes.
@@ -213,63 +228,6 @@ def update_andor_request(
         t.start()
 
 
-def check_if_sufficient_data(compute_node, active_spec, verbose=0):
-    """Check if current round of data meets requirements."""
-    is_sufficient = True
-
-    fp_assets = Path(compute_node['assets'])
-    fp_active = Path(compute_node['active'])
-    fp_meta = fp_assets / Path('obs', 'meta.txt')
-
-    current_round = get_current_round(fp_active, verbose=0)
-    meta = pd.read_csv(fp_meta)
-    accepted_protocol_list = meta.protocol_id.values[meta.is_accepted.values]
-    accepted_protocol_list = accepted_protocol_list.tolist()
-
-    sub = 'protocol_a_{0}-'.format(current_round)
-    current_protocols = [s for s in accepted_protocol_list if sub in s]
-    unique_list, protocol_count = np.unique(
-        current_protocols, return_counts=True
-    )
-    current_unique = len(unique_list)
-    current_total = np.sum(protocol_count)
-
-    needed_unique = active_spec['sufficient']['minUnique'] - current_unique
-    needed_total = active_spec['sufficient']['minTotal'] - current_total
-    if needed_unique > 0:
-        is_sufficient = False
-
-    if needed_total > 0:
-        is_sufficient = False
-
-    if verbose > 0:
-        if is_sufficient:
-            print(
-                'There is sufficient data to generate the next round of'
-                ' protocols.'
-            )
-            print(
-                'There are {0} assignments for the current round.'.format(
-                    current_total
-                )
-            )
-        else:
-            print(
-                'There is insufficient data to generate the next round of '
-                'protocols.'
-            )
-            if needed_unique > 0:
-                print(
-                    '  Need {0} more unique protocols.'.format(needed_unique)
-                )
-            if needed_total > 0:
-                print(
-                    '  Need {0} more total protocols.'.format(needed_total)
-                )
-
-    return is_sufficient, current_total
-
-
 def check_if_under_budget(compute_node, amt_spec, is_live=True, verbose=0):
     """Check that the project is still under budget."""
     is_under_budget = False
@@ -304,13 +262,10 @@ def check_if_under_budget(compute_node, amt_spec, is_live=True, verbose=0):
 
 
 def update_step(
-        compute_node, host_node, project_id, active_spec, fp_master_log=None,
+        obs, compute_node, project_id, active_spec, fp_master_log=None,
         verbose=0):
     """Update step of active selection procedure."""
-    fp_assets = Path(compute_node['assets'])
-    fp_obs = fp_assets / Path('obs', 'obs.hdf5')
     fp_catalog = Path(compute_node['catalog'])
-
     fp_payload = Path(compute_node['payload'])
     fp_active = Path(compute_node['active'])
 
@@ -321,7 +276,6 @@ def update_step(
     fp_docket = fp_current / Path('docket.hdf5')
 
     catalog = psiz.catalog.load_catalog(fp_catalog)
-    obs = psiz.trials.load_trials(fp_obs)
 
     current_round = get_current_round(fp_active, verbose=0)
     current_round = current_round + 1
@@ -380,15 +334,12 @@ def update_step(
         with open(fp_protocol, 'w') as outfile:
             json.dump(curr_protocol, outfile)
 
-    # Retire previous active protocols.
+    # Retire previous active protocols, regardless of accepted data.
     if current_round > 0:
         cmd = 'mv {0}/protocol_a_{1}-*.json {0}/retired/'.format(
             os.fspath(fp_payload), current_round-1
         )
         subprocess.run(cmd, shell=True)
-
-    # Sync payload.
-    pzc_pipes.sync_payload(fp_payload, host_node, project_id)
 
     # TODO Move summary plots to separate function.
     # Generate a random docket of trials for comparison.
@@ -556,22 +507,175 @@ def plot_ig_summary(ig_trial, ig_random, filename):
         )
 
 
-def write_master_log(msg, fp_master_log, do_print=True):
+def write_master_log(msg, fp_log, verbose=1):
     """Write to master log.
 
     Arguments:
         msg: The message to write.
-        fp_master_log: The file path for the log.
-        do_print (optional): Boolean indicating whether the message
+        fp_log: The file path for the log.
+        verbose (optional): Boolean indicating whether the message
             should also be printed using standard output.
     """
     dt_now_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-    msg_extra = '{0} | {1}'.format(dt_now_str, msg)
+    timestamped_msg = '{0} | {1}'.format(dt_now_str, msg)
 
-    if fp_master_log is not None:
-        f = open(fp_master_log, 'a')
-        f.write(msg_extra + '\n')
+    if fp_log is not None:
+        f = open(fp_log, 'a')
+        f.write(timestamped_msg + '\n')
         f.close()
 
-    if do_print:
-        print(msg_extra)
+    if verbose > 0:
+        print(timestamped_msg)
+
+
+def check_if_sufficient_data(df_meta, pattern, active_spec, verbose=0):
+    """Check if current round of data meets requirements."""
+    # TODO pass in master log
+    # TODO combine with retirement logic, thus have minEach, minTotal, minUnique
+    # can only provide minEach or minUnique
+    is_sufficient = True
+
+    accepted_protocol_list = df_meta.protocol_id.values[df_meta.is_accepted.values]
+    unique_accepted_list, protocol_count = np.unique(
+        accepted_protocol_list, return_counts=True
+    )
+
+    # Filter down
+    locs_match = array_has_pattern(pattern, uniq_accepted_list)
+    uniq_accepted_list = uniq_accepted_list[locs_match]
+    protocol_count = protocol_count[locs_match]
+
+    current_unique = len(unique_accepted_list)
+    current_total = np.sum(protocol_count)
+
+    needed_unique = active_spec['sufficient']['minUnique'] - current_unique
+    needed_total = active_spec['sufficient']['minTotal'] - current_total
+    if needed_unique > 0:
+        is_sufficient = False
+
+    if needed_total > 0:
+        is_sufficient = False
+
+    if verbose > 0:
+        if is_sufficient:
+            print(
+                'There is sufficient data to generate the next round of'
+                ' protocols.'
+            )
+            print(
+                'There are {0} assignments for the current round.'.format(
+                    current_total
+                )
+            )
+        else:
+            print(
+                'There is insufficient data to generate the next round of '
+                'protocols.'
+            )
+            if needed_unique > 0:
+                print(
+                    '  Need {0} more unique protocols.'.format(needed_unique)
+                )
+            if needed_total > 0:
+                print(
+                    '  Need {0} more total protocols.'.format(needed_total)
+                )
+
+    return is_sufficient, current_total
+
+
+def find_retireable(df_meta, pattern, min=1):
+    """Find protocols eligable for retirement.
+
+    Eligability is determined by the minimum number of assignments that
+    must be accepted for a protocol to be retired.
+
+    Arguments:
+        df_meta:
+        pattern:
+        min (optional):
+
+    """
+    accepted_protocol_list = df_meta.protocol_id.values[df_meta.is_accepted.values]
+    uniq_accepted_list, protocol_count = np.unique(
+        accepted_protocol_list, return_counts=True
+    )
+
+    # Filter down
+    locs_match = array_has_pattern(pattern, uniq_accepted_list)
+    uniq_accepted_list = uniq_accepted_list[locs_match]
+    protocol_count = protocol_count[locs_match]
+
+    eligable_list = []
+    for idx, protocol in enumerate(uniq_accepted_list):
+        if protocol_count[idx] >= min:
+            eligable_list.append(protocol)
+    eligable_list = np.asarray(eligable_list)
+
+    return eligable_list
+
+
+def array_has_pattern(pattern, arr):
+    """Find all protocols that match target."""
+    locs_match = np.zeros([len(arr)], dtype=bool)
+    for idx, str_entry in enumerate(arr):
+        result = re.match(pattern, str_entry)
+        if result is not None:
+            locs_match[idx] = True
+    return locs_match
+
+
+def retire_protocols(fp_payload, eligable_protocol_arr, fp_retired=None):
+    """Retire eligable protocols that match pattern.
+
+    Arguments:
+        fp_payload: File path to payload containing live protocols.
+        eligable_protocol_arr: An array of protocols that are eligable
+            for retirement.
+        fp_retired (optional):
+
+    """
+    if fp_retired is None:
+        fp_retired = fp_payload / Path('retired')
+
+    # Make sure 'retired' directory exists inside `payload` directory.
+    if not fp_retired.exists():
+        fp_retired.mkdir()
+
+    # Move eligable protocols to `retired` directory.
+    for protocol in eligable_protocol_arr:
+        fp_protocol = fp_payload / Path(protocol)
+        if fp_protocol.exists():
+            cmd = 'mv {0} {1}'.format(
+                os.fspath(fp_protocol), os.fspath(fp_retired)
+            )
+            subprocess.run(cmd, shell=True)
+
+
+def count_remaining_protocols(fp_payload, log=None, verbose=0):
+    """Count remaining protocols in payload.
+    
+    Arguments:
+        fp_payload:
+        log:
+        verbose:
+
+    """
+    dir_list = glob(os.fspath(fp_payload) + '/protocol_*.json')
+    n_remain = len(dir_list)
+    msg = 'There are {0} protocols remaining.'.format(n_remain)
+    write_master_log(msg, log)
+    return n_remain
+
+
+def select_obs(obs, df_meta, pattern):
+    """Split observations into train and test."""
+    locs_accepted = df_meta.is_accepted.values
+    accepted_protocol_list = df_meta.protocol_id.values[locs_accepted]
+    accepted_session_list = df_meta.session_id.values[locs_accepted]
+
+    # Find data with protocols matching the supplied pattern.
+    locs_match = None
+    # TODO
+    obs_match = obs.subset(locs_match)
+    return obs_match
