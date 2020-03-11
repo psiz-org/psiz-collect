@@ -135,7 +135,7 @@ def update_andor_request(
 
         # Check if there is sufficient data.
         current_round = get_current_round(fp_active, verbose=0)
-        pattern = 'protocol_a_{0}-.*'.format(current_round)
+        pattern = 'protocol_train_{0}-.*'.format(current_round)  # TODO factor out
         is_sufficient, current_total = check_if_sufficient_data(
             df_meta, pattern, active_spec, verbose=1
         )
@@ -328,15 +328,17 @@ def update_step(
 
     # Save new protocols.
     for idx, curr_protocol in enumerate(protocol_list):
+        # TODO factor out `protocol_train_`
         fp_protocol = fp_payload / Path(
-            'protocol_a_{0}-{1}.json'.format(current_round, idx)
+            'protocol_train_{0}-{1}.json'.format(current_round, idx)
         )
         with open(fp_protocol, 'w') as outfile:
             json.dump(curr_protocol, outfile)
 
     # Retire previous active protocols, regardless of accepted data.
     if current_round > 0:
-        cmd = 'mv {0}/protocol_a_{1}-*.json {0}/retired/'.format(
+        # TODO factor out `protocol_train_`
+        cmd = 'mv {0}/protocol_train_{1}-*.json {0}/retired/'.format(
             os.fspath(fp_payload), current_round-1
         )
         subprocess.run(cmd, shell=True)
@@ -541,7 +543,7 @@ def check_if_sufficient_data(df_meta, pattern, active_spec, verbose=0):
     )
 
     # Filter down
-    locs_match = array_has_pattern(pattern, uniq_accepted_list)
+    locs_match = find_protocols(pattern, uniq_accepted_list)
     uniq_accepted_list = uniq_accepted_list[locs_match]
     protocol_count = protocol_count[locs_match]
 
@@ -602,7 +604,7 @@ def find_retireable(df_meta, pattern, min=1):
     )
 
     # Filter down
-    locs_match = array_has_pattern(pattern, uniq_accepted_list)
+    locs_match = find_protocols(pattern, uniq_accepted_list)
     uniq_accepted_list = uniq_accepted_list[locs_match]
     protocol_count = protocol_count[locs_match]
 
@@ -615,11 +617,21 @@ def find_retireable(df_meta, pattern, min=1):
     return eligable_list
 
 
-def array_has_pattern(pattern, arr):
-    """Find all protocols that match target."""
-    locs_match = np.zeros([len(arr)], dtype=bool)
-    for idx, str_entry in enumerate(arr):
-        result = re.match(pattern, str_entry)
+def find_protocols(pattern, protocol_arr):
+    """Find all protocols that match target.
+
+    Arguments:
+        pattern: A regular expression.
+        protocol_arr: An array of (string) protocol IDs.
+
+    Returns:
+        locs_match: The locations where the protocol ID matches the
+            supplied pattern.
+
+    """
+    locs_match = np.zeros([len(protocol_arr)], dtype=bool)
+    for idx, protocol in enumerate(protocol_arr):
+        result = re.match(pattern, protocol)
         if result is not None:
             locs_match[idx] = True
     return locs_match
@@ -668,14 +680,30 @@ def count_remaining_protocols(fp_payload, log=None, verbose=0):
     return n_remain
 
 
-def select_obs(obs, df_meta, pattern):
-    """Split observations into train and test."""
+def select_trials_by_protocol(pattern, obs, df_meta):
+    """Select trials matching pattern.
+
+    Arguments:
+        pattern: A regular expression.
+        obs: A psiz.trials.Observations object.
+        df_meta: A metadata dataframe.
+
+    """
     locs_accepted = df_meta.is_accepted.values
-    accepted_protocol_list = df_meta.protocol_id.values[locs_accepted]
-    accepted_session_list = df_meta.session_id.values[locs_accepted]
+    accepted_protocol_arr = df_meta.protocol_id.values[locs_accepted]
+    accepted_session_arr = df_meta.session_id.values[locs_accepted]
+
+    locs_protocol_match = find_protocols(pattern, accepted_protocol_arr)
+    match_session_arr = accepted_session_arr[locs_protocol_match]
 
     # Find data with protocols matching the supplied pattern.
-    locs_match = None
-    # TODO
-    obs_match = obs.subset(locs_match)
+    locs_match = np.zeros(obs.n_trial, dtype=bool)
+    for session_id in match_session_arr:
+        locs_session_id = np.equal(obs.session_id, session_id)
+        locs_match = np.logical_or(locs_match, locs_session_id)
+
+    if np.sum(locs_match) > 0:
+        obs_match = obs.subset(locs_match)
+    else:
+        obs_match = None
     return obs_match
