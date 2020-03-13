@@ -538,17 +538,17 @@ def check_if_sufficient_data(df_meta, pattern, active_spec, verbose=0):
     is_sufficient = True
 
     accepted_protocol_list = df_meta.protocol_id.values[df_meta.is_accepted.values]
-    unique_accepted_list, protocol_count = np.unique(
+    uniq_accepted_list, accepted_protocol_count = np.unique(
         accepted_protocol_list, return_counts=True
     )
 
     # Filter down
     locs_match = find_protocols(pattern, uniq_accepted_list)
     uniq_accepted_list = uniq_accepted_list[locs_match]
-    protocol_count = protocol_count[locs_match]
+    accepted_protocol_count = accepted_protocol_count[locs_match]
 
-    current_unique = len(unique_accepted_list)
-    current_total = np.sum(protocol_count)
+    current_unique = len(uniq_accepted_list)
+    current_total = np.sum(accepted_protocol_count)
 
     needed_unique = active_spec['sufficient']['minUnique'] - current_unique
     needed_total = active_spec['sufficient']['minTotal'] - current_total
@@ -599,18 +599,18 @@ def find_retireable(df_meta, pattern, min=1):
 
     """
     accepted_protocol_list = df_meta.protocol_id.values[df_meta.is_accepted.values]
-    uniq_accepted_list, protocol_count = np.unique(
+    uniq_accepted_list, accepted_protocol_count = np.unique(
         accepted_protocol_list, return_counts=True
     )
 
     # Filter down
     locs_match = find_protocols(pattern, uniq_accepted_list)
     uniq_accepted_list = uniq_accepted_list[locs_match]
-    protocol_count = protocol_count[locs_match]
+    accepted_protocol_count = accepted_protocol_count[locs_match]
 
     eligable_list = []
     for idx, protocol in enumerate(uniq_accepted_list):
-        if protocol_count[idx] >= min:
+        if accepted_protocol_count[idx] >= min:
             eligable_list.append(protocol)
     eligable_list = np.asarray(eligable_list)
 
