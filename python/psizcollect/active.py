@@ -531,7 +531,8 @@ def write_master_log(msg, fp_log, verbose=1):
 
 
 def check_if_sufficient_data(df_meta, pattern, active_spec, verbose=0):
-    """Check if current round of data meets requirements."""
+    """Check if current data meets requirements."""
+    # TODO don't pass in pattern
     # TODO pass in master log
     # TODO combine with retirement logic, thus have minEach, minTotal, minUnique
     # can only provide minEach or minUnique
@@ -542,7 +543,7 @@ def check_if_sufficient_data(df_meta, pattern, active_spec, verbose=0):
         accepted_protocol_list, return_counts=True
     )
 
-    # Filter down
+    # Filter down.
     locs_match = find_protocols(pattern, uniq_accepted_list)
     uniq_accepted_list = uniq_accepted_list[locs_match]
     accepted_protocol_count = accepted_protocol_count[locs_match]
@@ -586,7 +587,7 @@ def check_if_sufficient_data(df_meta, pattern, active_spec, verbose=0):
     return is_sufficient, current_total
 
 
-def find_retireable(df_meta, pattern, min=1):
+def find_retireable(df_meta, min=1):
     """Find protocols eligable for retirement.
 
     Eligability is determined by the minimum number of assignments that
@@ -594,19 +595,15 @@ def find_retireable(df_meta, pattern, min=1):
 
     Arguments:
         df_meta:
-        pattern:
         min (optional):
 
     """
-    accepted_protocol_list = df_meta.protocol_id.values[df_meta.is_accepted.values]
+    accepted_protocol_list = df_meta.protocol_id.values[
+        df_meta.is_accepted.values
+    ]
     uniq_accepted_list, accepted_protocol_count = np.unique(
         accepted_protocol_list, return_counts=True
     )
-
-    # Filter down
-    locs_match = find_protocols(pattern, uniq_accepted_list)
-    uniq_accepted_list = uniq_accepted_list[locs_match]
-    accepted_protocol_count = accepted_protocol_count[locs_match]
 
     eligable_list = []
     for idx, protocol in enumerate(uniq_accepted_list):
@@ -666,7 +663,7 @@ def retire_protocols(fp_payload, eligable_protocol_arr, fp_retired=None):
 
 def count_remaining_protocols(fp_payload, log=None, verbose=0):
     """Count remaining protocols in payload.
-    
+
     Arguments:
         fp_payload:
         log:
