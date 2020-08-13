@@ -105,7 +105,7 @@ def extract_observations(
     fp_project = fp_app / Path('projects', project_id)
     if not os.path.exists(fp_project):
         os.makedirs(fp_project)
-    fp_obs = fp_project / Path("obs.hdf5")
+    fp_obs = fp_project / Path("obs_dirty.hdf5")
     fp_meta = fp_project / Path("meta.txt")
     fp_summary = fp_project / Path("summary.txt")
 
@@ -337,16 +337,18 @@ def assemble_accepted_obs(
                     dict_meta['is_accepted'][idx] = True
                     # update_status(my_cxn, assignment_id, STATUS_ACCEPTED)
                     dict_meta['status_code'][idx] = STATUS_ACCEPTED
-                    if obs is None:
-                        obs = obs_agent
-                    else:
-                        obs = psiz.trials.stack((obs, obs_agent))
+
+                # Add obs, regardless of grade.
+                if obs is None:
+                    obs = obs_agent
+                else:
+                    obs = psiz.trials.stack((obs, obs_agent))
         else:
             # Zero trials, mark as expired and incomplete assignment.
             if dict_meta['status_code'][idx] == STATUS_CREATED:
                 update_status(my_cxn, assignment_id, STATUS_EXPIRED)
 
-    obs = psiz.preprocess.remove_catch_trials(obs)
+    # obs = psiz.preprocess.remove_catch_trials(obs)
     df_meta = pd.DataFrame.from_dict(dict_meta)
 
     return obs, df_meta
