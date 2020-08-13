@@ -106,7 +106,7 @@ def pull_obs(host_node, project_id, fp_assets, verbose=0):
     if not fp_obs.exists():
         fp_obs.mkdir(parents=True)
 
-    cmd = 'scp {0}@{1}:.psiz-collect/projects/{2}/obs.hdf5 {3}/'.format(
+    cmd = 'scp {0}@{1}:.psiz-collect/projects/{2}/obs_dirty.hdf5 {3}/'.format(
         host_node["user"], host_node["ip"], project_id, os.fspath(fp_obs)
     )
     subprocess.run(cmd, shell=True)
