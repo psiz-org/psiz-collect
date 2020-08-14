@@ -60,24 +60,27 @@ def extract_observations(
     """Extract and process observations from MySQL database.
 
     Data stored in a MySQL database is extracted and processed into
-    three separate files: obs.hdf5, meta.txt, and summary.txt.
+    three separate files: obs_dirty.hdf5, meta.txt, and summary.txt.
 
-    This script creates a psiz.trials.Observations object for the
+    This script creates a psiz.trials.RankObservations object for the
     user-supplied `project_id`. All COMPLETED assignments (i.e.,
     status_code = 1 or status_code=3) belonging to the requested
     project are graded to see if they meet threshold for being
-    accepted and included in the final Observations object.
+    accepted and the MySQL database is updated accordingly. All trials
+    are included (including catch trials and regardless of grade) in
+    the final RankObservations object. To make it clear to the user
+    that the Observations should still be processed (drop trials below
+    grade and drop catch trials), the data is saved as
+    `obs_dirty.hdf5`.
 
-    Completed assignments are graded based on catch trial performance
-    and dropped if they do not meet the provided criterion. In
-    addition, the status code of assignments that do not meet criterion
-    is updated to status_code=3. After grading, all catch trials are
-    removed before saving the observations to disk.
+    Completed assignments are graded based on catch trial performance.
+    The status code of assignments that do not meet criterion is
+    updated to status_code=3.
 
     The accepted observations are saved in a directory with the same
     name as the supplied `project_id`, i.e.,
-    `.psiz-collect/projects/<project_id>/obs.hdf5` (see README for more
-    regarding the assumed directory structure).
+    `.psiz-collect/projects/<project_id>/obs_dirty.hdf5` (see README
+    for more regarding the assumed directory structure).
 
     In addition to the observations object, metadata (meta.txt) and a
     summary is generated (summary.txt). The metadata file can be used
@@ -135,7 +138,7 @@ def extract_observations(
         except Exception:
             pass
 
-    # Create psiz.trials.Observations object.
+    # Create psiz.trials.RankObservations object and meta data.
     if len(df_assignment.index) > 0:
         obs, meta = assemble_accepted_obs(
             my_cxn, df_assignment, grade_mode, grade_threshold, max_agent_id
@@ -239,7 +242,7 @@ def fetch_assignment(my_cxn, project_id):
 
 def assemble_accepted_obs(
         my_cxn, df_assignment, grade_mode, grade_thresh, max_agent_id):
-    """Create Observations object for accepted data.
+    """Create RankObservations object for accepted data.
 
     Arguments:
         my_cxn: A connection to a MySQL database.
@@ -251,7 +254,7 @@ def assemble_accepted_obs(
             All new agent IDs must be greater than this integer.
 
     Returns:
-        obs: An psiz.trials.Observations object.
+        obs: An psiz.trials.RankObservations object.
         df_meta: A companion dataframe containing metadata about the
             observations.
 
@@ -389,7 +392,7 @@ def create_obs_agent(sql_result, agent_id, session_id):
         rt_ms[i_trial, 7] = sql_result[i_trial][21]
         rt_submit_ms[i_trial] = sql_result[i_trial][22]
 
-    obs = psiz.trials.Observations(
+    obs = psiz.trials.RankObservations(
         response_set, n_select=n_select, is_ranked=is_ranked,
         agent_id=agent_id, session_id=session_id, rt_ms=rt_submit_ms
     )

@@ -32,6 +32,7 @@ Functions:
     create_hit_on_host:
     pull_hit_log:
     review_vouchers_on_host:
+
 """
 
 import configparser
@@ -45,7 +46,6 @@ import numpy as np
 import pandas as pd
 import paramiko
 import psiz.trials
-import psiz.preprocess
 
 # Consants used/assumed in the MySQL database.
 STATUS_CREATED = 0  # Incomplete and not expired.
@@ -137,7 +137,7 @@ def write_summary(obs, meta, fp_summary):
     """Write a plain-text summary of the observations.
 
     Arguments:
-        obs: A psiz.trials.Observations object.
+        obs: A psiz.trials.RankObservations object.
         meta: A pandas.DataFrame object containing metadata for the
             observations.
         fp_summary: The file path of the summary file.
@@ -170,7 +170,7 @@ def assignment_summary(obs, meta):
     """Return a plain-text summary of assignments.
 
     Arguments:
-        obs: psiz.trials.Observations object.
+        obs: psiz.trials.RankObservations object.
         meta: A pandas.DataFrame object containing metadata for the
             observations.
 
@@ -229,7 +229,7 @@ def observation_summary(obs, meta):
     """Return a plain-text summary of observations.
 
     Arguments:
-        obs: psiz.trials.Observations object.
+        obs: psiz.trials.RankObservations object.
         meta: A pandas.DataFrame object containing metadata for the
             observations.
 
@@ -310,7 +310,7 @@ def warning_summary(obs, meta):
     """Return a plain-text summary of warning.
 
     Arguments:
-        obs: psiz.trials.Observations object.
+        obs: psiz.trials.RankObservations object.
         meta: A pandas.DataFrame object containing metadata for the
             observations.
 
