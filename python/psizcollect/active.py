@@ -587,31 +587,31 @@ def write_master_log(msg, fp_log, verbose=1):
 #     return is_sufficient, current_total
 
 
-def find_retireable(df_meta, min=1):
-    """Find protocols eligable for retirement.
+# def find_retireable(df_meta, min=1):
+#     """Find protocols eligable for retirement.
 
-    Eligability is determined by the minimum number of assignments that
-    must be accepted for a protocol to be retired.
+#     Eligability is determined by the minimum number of assignments that
+#     must be accepted for a protocol to be retired.
 
-    Arguments:
-        df_meta:
-        min (optional):
+#     Arguments:
+#         df_meta:
+#         min (optional):
 
-    """
-    accepted_protocol_list = df_meta.protocol_id.values[
-        df_meta.is_accepted.values
-    ]
-    uniq_accepted_list, accepted_protocol_count = np.unique(
-        accepted_protocol_list, return_counts=True
-    )
+#     """
+#     accepted_protocol_list = df_meta.protocol_id.values[
+#         df_meta.is_accepted.values
+#     ]
+#     uniq_accepted_list, accepted_protocol_count = np.unique(
+#         accepted_protocol_list, return_counts=True
+#     )
 
-    eligable_list = []
-    for idx, protocol in enumerate(uniq_accepted_list):
-        if accepted_protocol_count[idx] >= min:
-            eligable_list.append(protocol)
-    eligable_list = np.asarray(eligable_list)
+#     eligable_list = []
+#     for idx, protocol in enumerate(uniq_accepted_list):
+#         if accepted_protocol_count[idx] >= min:
+#             eligable_list.append(protocol)
+#     eligable_list = np.asarray(eligable_list)
 
-    return eligable_list
+#     return eligable_list
 
 
 def find_protocols(pattern, protocol_arr):
@@ -686,9 +686,12 @@ def select_trials_by_protocol(pattern, obs, df_meta):
         df_meta: A metadata dataframe.
 
     """
-    locs_accepted = df_meta.is_accepted.values
-    accepted_protocol_arr = df_meta.protocol_id.values[locs_accepted]
-    accepted_session_arr = df_meta.session_id.values[locs_accepted]
+    bidx_completed = np.logical_or(
+        np.equal(df_meta.status_code.values, 1),
+        np.equal(df_meta.status_code.values, 3),
+    )
+    accepted_protocol_arr = df_meta.protocol_id.values[bidx_completed]
+    accepted_session_arr = df_meta.session_id.values[bidx_completed]
 
     locs_protocol_match = find_protocols(pattern, accepted_protocol_arr)
     match_session_arr = accepted_session_arr[locs_protocol_match]

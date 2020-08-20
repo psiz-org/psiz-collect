@@ -56,7 +56,8 @@ N_MAX_REF = 8
 
 
 def update_obs_on_host(
-        host_node, project_id, grade_mode, grade_threshold, verbose=0):
+        host_node, project_id, grade_mode, grade_threshold, use_preexist=False,
+        verbose=0):
     """Update observations on host node.
 
     Arguments:
@@ -76,9 +77,9 @@ def update_obs_on_host(
 
     cmd_python = (
         "from psizcollect import extract; "
-        "extract.extract_observations('{0}', '{1}', {2}, use_preexist=False)"
+        "extract.extract_observations('{0}', '{1}', {2}, use_preexist={3})"
     ).format(
-        project_id, grade_mode, grade_threshold
+        project_id, grade_mode, grade_threshold, use_preexist
     )
     cmd = (
         '{0} -c "{1}"'
