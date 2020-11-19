@@ -678,3 +678,18 @@ def assign_qualification(aws_profile, is_live, worker_id, qualification_id, int_
         IntegerValue=int_val,
         SendNotification=False
     )
+
+
+def check_account_balance(aws_profile, is_live, verbose=0):
+    """Check account balance."""
+    session = boto3.Session(profile_name=aws_profile)
+    amt_client = session.client(
+        'mturk', endpoint_url=get_endpoint_url(is_live)
+    )
+    r = amt_client.get_account_balance()
+
+    if verbose > 0:
+        print('Available Balance: {0}'.format(r['AvailableBalance']))
+    if verbose > 1:
+        print('On-hold Balance: {0}'.format(r['OnHoldBalance']))
+    return r['AvailableBalance']

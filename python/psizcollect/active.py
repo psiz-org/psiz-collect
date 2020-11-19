@@ -46,7 +46,7 @@ import numpy as np
 import pandas as pd
 import psiz.catalog
 import psiz.dimensionality
-import psiz.generator
+import psiz.generators
 import psiz.models
 import psizcollect.amt
 import psizcollect.pipes as pzc_host
@@ -345,11 +345,11 @@ import psizcollect.utils as pzc_utils
 
 #     # TODO Move summary plots to separate function.
 #     # Generate a random docket of trials for comparison.
-#     random_gen = psiz.generator.RandomGenerator(
+#     random_gen = psiz.generators.RandomGenerator(
 #         catalog.n_stimuli, n_reference=8, n_select=2
 #     )
 #     rand_docket = random_gen.generate(8000)
-#     ig_random = psiz.generator.information_gain(emb, samples, rand_docket)
+#     ig_random = psiz.generators.information_gain(emb, samples, rand_docket)
 #     ig_trial = ig_info['ig_trial']
 #     fp_fig_ig = fp_active / Path(
 #         'archive', 'ig', 'ig_info_{0}.pdf'.format(current_round)
@@ -459,12 +459,12 @@ import psizcollect.utils as pzc_utils
 #     """Generate protocols using active selection."""
 #     n_real_trial = pzc_utils.count_real_trials(active_spec['protocol'])
 #     n_total_trial = active_spec['nProtocol'] * n_real_trial
-#     active_gen = psiz.generator.ActiveGenerator(
+#     active_gen = psiz.generators.ActiveGenerator(
 #         emb.n_stimuli, n_reference=8, n_select=2,
 #         max_candidate=active_spec['nTrialShotgun']
 #     )
 
-#     priority = psiz.generator.determine_stimulus_priority(
+#     priority = psiz.generators.determine_stimulus_priority(
 #         emb, samples, mode='entropy'
 #     )
 #     active_docket, ig_info = active_gen.generate(
