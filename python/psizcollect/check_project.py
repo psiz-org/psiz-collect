@@ -158,5 +158,5 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     main(args.fp_project)
-    # fp_project = "psiz-collect/c001"
+    # fp_project = "c001"
     # main(fp_project)

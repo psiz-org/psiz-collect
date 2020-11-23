@@ -18,7 +18,7 @@ This setup guide assumes a LAMP stack, a registered domain name, and a SSL certi
 * 1.4 Set up re-write rules.
 * 1.5 (optional) Set AWS and AMT credentials (only necessary if using AMT)
 
-<!-- TODO the reminder of this document assumes that the code is being installed at /var/www/psiz.org/collect/psiz-collect/. You will have to modify the relevant commands to work for your setup. -->
+<!-- TODO the reminder of this document assumes that the code is being installed at /var/www/psiz.org/collect/. You will have to modify the relevant commands to work for your setup. -->
 
 ### 1.1 Clone webfiles to desired location.
 <!-- TODO All of the relevant webfiles are contained in the directory `website/`-->
@@ -92,7 +92,7 @@ If the PsiZ Collect website resides at the root of the website, then DIR_COLLECT
 Modify the .htaccess file at the root of the host website.
 ```
 RewriteEngine on
-RewriteRule ^collect/([A-Za-z0-9]+)/$ collect/psiz-collect/index.php?projectId=$1 [QSA]
+RewriteRule ^collect/([A-Za-z0-9]+)/$ collect/index.php?projectId=$1 [QSA]
 ```
 
 ### 1.5 (optional) Set AWS and AMT credentials
