@@ -48,7 +48,9 @@
         <div class="row">
             <div class="col"></div>
             <div class="col-6">
-                <p class="amtlogin__error">Oops, something went wrong! Your AMT information did not transfer correctly. Please close this tab and retry the experiment link on the AMT page. If the problem persists, please return the HIT and send an email to the requester.</p>
+                <div class="amtlogin__error">
+                    <p>Oops, something went wrong! Your AMT information did not transfer correctly. Please close this tab and retry the experiment link on the AMT page. If the problem persists, please return the HIT and send an email to the requester.</p>
+                </div>
             </div>
             <div class="col"></div>
         </div>
