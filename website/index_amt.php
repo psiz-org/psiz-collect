@@ -39,13 +39,13 @@
             </div>
             <div class="col"></div>
         </div>
-        <div class="row">
+        <!-- <div class="row">
             <div class="col"></div>
             <div class="col-xs-3 col-md-2">
                 <div id='amtlogin__button' class='custom-button unselectable custom-button--disabled'>OK</div>
             </div>
             <div class="col"></div>
-        </div>
+        </div> -->
         <div class="row">
             <div class="col"></div>
             <div class="col-6">
@@ -70,9 +70,9 @@
             <div class="message__content"></div>
         </div>
 
-        <?php require "templates/grid.php"; ?>
+        <?php require "/collect/templates/grid.php"; ?>
 
-        <?php require "templates/final.php"; ?>
+        <?php require "/collect/templates/final.php"; ?>
 
     </div>
 
@@ -80,7 +80,7 @@
         <div class="row">
             <div class="col-xs-1 col-md-3"></div>
             <div class="instructions__content col-xs-10 col-md-6">
-                <?php require "templates/default-instructions.php"; ?>
+                <?php require "/collect/templates/default-instructions.php"; ?>
             </div>
             <div class="col-xs-1 col-md-3"></div>
         </div>
@@ -92,7 +92,7 @@
     <script src="/collect/static/js/AppController.js"></script>
     <script src="/collect/static/js/utils.js"></script>
     <script type="text/javascript">
-    var queryVariables = <?php require "./php/querystring-parameters.php"; ?>;
+    var queryVariables = <?php require "/collect/php/querystring-parameters.php"; ?>;
     var client = clientInfo();
 
     var stimulusList = [];
@@ -133,19 +133,21 @@
         }
         if (can_proceed) {
             // Enable button.
-            $('#amtlogin__button').removeClass('custom-button--disabled');
-            $('#amtlogin__button').addClass('custom-button--enabled');
-            $('#amtlogin__button').removeClass('unselectable');
+            // $('#amtlogin__button').removeClass('custom-button--disabled');
+            // $('#amtlogin__button').addClass('custom-button--enabled');
+            // $('#amtlogin__button').removeClass('unselectable');
+            $(".amtlogin").hide(0);
+            launchController();
         } else {
             // Do not enable button. Show error message.
             $(".amtlogin__error").show(0);
         }
     });
 
-    $("#amtlogin__button").click( function() {
-        $(".amtlogin").hide(0);
-        launchController();
-    });
+    // $("#amtlogin__button").click( function() {
+    //     $(".amtlogin").hide(0);
+    //     launchController();
+    // });
 
     function launchController() {
         var dataToPost = {
