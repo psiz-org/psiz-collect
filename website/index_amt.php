@@ -17,7 +17,7 @@
 
     <!-- Note: psiz-collection assets must be loaded by going up a directory
     since re-write rule places the active experiment in a subdirectory. -->
-    <link rel='stylesheet' href='https://www.psiz.org/collect/static/css/general.css'>
+    <link rel='stylesheet' href='/collect/static/css/general.css'>
 </head>
 
 <body>
@@ -83,8 +83,8 @@
         </div>
     </div>
 
-    <script src="https://www.psiz.org/collect/static/js/AppController.js"></script>
-    <script src="https://www.psiz.org/collect/static/js/utils.js"></script>
+    <script src="/collect/static/js/AppController.js"></script>
+    <script src="/collect/static/js/utils.js"></script>
     <script type="text/javascript">
     var queryVariables = <?php require "./php/querystring-parameters.php"; ?>;
     var client = clientInfo();
@@ -144,7 +144,7 @@
         var dataToPost = {
             appState: JSON.stringify(appState)
         }
-        var fetchProject = $.post("https://www.psiz.org/collect/php/initialize.php", dataToPost, function(result) {
+        var fetchProject = $.post("/collect/php/initialize.php", dataToPost, function(result) {
             var projectConfig = JSON.parse(result);
             stimulusList = projectConfig["stimulusList"];
             appState = projectConfig["appState"];
