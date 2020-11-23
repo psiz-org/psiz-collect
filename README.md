@@ -86,6 +86,9 @@ SetEnv DIR_COLLECT /var/www/my_website/path_to_collect <-- add this line
 ```
 If the PsiZ Collect website resides at the root of the website, then DIR_COLLECT will have the same path as DOCUMENT_ROOT. If you do not have control of the vhost file, you can set the variable in a `.htaccess` file. However, this approach requires that `SetEnv` be allowed in `.htaccess` files, which is specified using the `AllowOverride` directive.
 
+<!-- TODO -->
+change absolute path in index.php files `/collect/`....
+
 ### 1.4 (optional) Set up re-write rules.
 
 <!-- TODO -->
