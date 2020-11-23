@@ -48,7 +48,7 @@
         <div class="row">
             <div class="col"></div>
             <div class="col-6">
-                <p class="amtlogin_error">Oops, something went wrong! Your AMT information did not transfer correctly. Please close this tab and retry the experiment link on the AMT page. If the problem persists, please return the HIT and send an email to the requester.</p>
+                <p class="amtlogin__error">Oops, something went wrong! Your AMT information did not transfer correctly. Please close this tab and retry the experiment link on the AMT page. If the problem persists, please return the HIT and send an email to the requester.</p>
             </div>
             <div class="col"></div>
         </div>
@@ -119,15 +119,15 @@
         $(".amtlogin").show(0);
 
         // If information is missing, do not advance. TODO
-        var can_proceed = true
+        var can_proceed = true;
         if (appState['workerId'] == "") {
-            can_proceed = false
+            can_proceed = false;
         }
         if (appState['hitId'] == "") {
-            can_proceed = false
+            can_proceed = false;
         }
         if (appState['assignmentId'] == "") {
-            can_proceed = false
+            can_proceed = false;
         }
         if (can_proceed) {
             // Enable button.
@@ -136,6 +136,7 @@
             $('.amtlogin__button').removeClass('unselectable');
         } else {
             // Do not enable button. Show error message.
+            $(".amtlogin__error").show(0);
         }
     });
 
