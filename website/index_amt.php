@@ -118,8 +118,6 @@
         $("#amtlogin__hitid").html(appState['amtHitId']);
         $("#amtlogin__assignmentid").html(appState['amtAssignmentId']);
 
-        $(".amtlogin").show(0);
-
         // If information is missing, do not advance. TODO
         var can_proceed = true;
         if (appState['workerId'] == "") {
@@ -140,6 +138,7 @@
             launchController();
         } else {
             // Do not enable button. Show error message.
+            $(".amtlogin").show(0);
             $(".amtlogin__error").show(0);
         }
     });
