@@ -3,3 +3,5 @@
 [X] update env name on vhost
 [X] update hit config
 [ ] update deploy project script, `psiz-collect` no longer exists
+
+# index_amt.php
