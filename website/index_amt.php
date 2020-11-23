@@ -112,8 +112,8 @@
     
     $(document).ready(function () {
         $("#amtlogin__workerid").html(appState['workerId']);
-        $("#amtlogin__hitid").html(appState['hitId']);
-        $("#amtlogin__assignmentid").html(appState['assignmentId']);
+        $("#amtlogin__hitid").html(appState['amtHitId']);
+        $("#amtlogin__assignmentid").html(appState['amtAssignmentId']);
 
         $(".amtlogin").show(0);
 
@@ -122,10 +122,10 @@
         if (appState['workerId'] == "") {
             can_proceed = false;
         }
-        if (appState['hitId'] == "") {
+        if (appState['amtHitId'] == "") {
             can_proceed = false;
         }
-        if (appState['assignmentId'] == "") {
+        if (appState['amtAssignmentId'] == "") {
             can_proceed = false;
         }
         if (can_proceed) {
