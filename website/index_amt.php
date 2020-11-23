@@ -130,9 +130,9 @@
         }
         if (can_proceed) {
             // Enable button.
-            $('.amtlogin__button').removeClass('custom-button--disabled');
-            $('.amtlogin__button').addClass('custom-button--enabled');
-            $('.amtlogin__button').removeClass('unselectable');
+            $('#amtlogin__button').removeClass('custom-button--disabled');
+            $('#amtlogin__button').addClass('custom-button--enabled');
+            $('#amtlogin__button').removeClass('unselectable');
         } else {
             // Do not enable button. Show error message.
             $(".amtlogin__error").show(0);
