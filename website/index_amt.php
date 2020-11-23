@@ -70,9 +70,9 @@
             <div class="message__content"></div>
         </div>
 
-        <?php require "/collect/templates/grid.php"; ?>
+        <?php require "templates/grid.php"; ?>
 
-        <?php require "/collect/templates/final.php"; ?>
+        <?php require "templates/final.php"; ?>
 
     </div>
 
@@ -80,7 +80,7 @@
         <div class="row">
             <div class="col-xs-1 col-md-3"></div>
             <div class="instructions__content col-xs-10 col-md-6">
-                <?php require "/collect/templates/default-instructions.php"; ?>
+                <?php require "templates/default-instructions.php"; ?>
             </div>
             <div class="col-xs-1 col-md-3"></div>
         </div>
@@ -92,7 +92,7 @@
     <script src="/collect/static/js/AppController.js"></script>
     <script src="/collect/static/js/utils.js"></script>
     <script type="text/javascript">
-    var queryVariables = <?php require "/collect/php/querystring-parameters.php"; ?>;
+    var queryVariables = <?php require "php/querystring-parameters.php"; ?>;
     var client = clientInfo();
 
     var stimulusList = [];
