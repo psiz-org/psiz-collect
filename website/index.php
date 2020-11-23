@@ -17,7 +17,7 @@
 
     <!-- Note: psiz-collection assets must be loaded by going up a directory
     since re-write rule places the active experiment in a subdirectory. -->
-    <link rel='stylesheet' href='/collect/static/css/general.css'>
+    <link rel='stylesheet' href='/collect/static/css/general-001.css'>
 </head>
 
 <body>
