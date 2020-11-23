@@ -15,8 +15,6 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
 
-    <!-- Note: psiz-collection assets must be loaded by going up a directory
-    since re-write rule places the active experiment in a subdirectory. -->
     <link rel='stylesheet' href='/collect/static/css/general-001.css'>
 </head>
 
@@ -32,9 +30,12 @@
             <div class="col"></div>
             <div class="col-6">
                 <h1 class="amtlogin__heading">AMT Login</h1>
-                <h4>Worker ID: <span id='amtlogin__workerid'></span></h4>
-                <h4>HIT ID: <span id='amtlogin__hitid'></span></h4>
-                <h4>Assignment ID: <span id='amtlogin__assignmentid'></span></h4>
+                <h5>Worker ID:</h5>
+                <p><span id='amtlogin__workerid'></span></p>
+                <h5>HIT ID:</h5>
+                <p><span id='amtlogin__hitid'></span></p>
+                <h5>Assignment ID:</h5>
+                <p><span id='amtlogin__assignmentid'></span></p>
             </div>
             <div class="col"></div>
         </div>
