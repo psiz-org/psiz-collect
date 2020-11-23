@@ -70,8 +70,7 @@
         <?php require "templates/grid.php"; ?>
 
         <?php require "templates/final.php"; ?>
-        <!-- TODO remove extra close div? -->
-        </div> 
+
     </div>
 
     <div class='container-fluid overlay overlay-instructions'>
@@ -112,9 +111,9 @@
     }
     
     $(document).ready(function () {
-        $("#amtlogin__workerid").html(appState['workerId'])
-        $("#amtlogin__hitid").html(appState['hitId'])
-        $("#amtlogin__assignmentid").html(appState['assignmentId'])
+        $("#amtlogin__workerid").html(appState['workerId']);
+        $("#amtlogin__hitid").html(appState['hitId']);
+        $("#amtlogin__assignmentid").html(appState['assignmentId']);
 
         $(".amtlogin").show(0);
 
