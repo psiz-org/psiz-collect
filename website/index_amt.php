@@ -32,9 +32,9 @@
             <div class="col"></div>
             <div class="col-6">
                 <h1 class="amtlogin__heading">AMT Login</h1>
-                <h3>Worker ID: <span id='amtlogin__workerid'></span></h3>
-                <h3>HIT ID: <span id='amtlogin__hitid'></span></h3>
-                <h3>Assignment ID: <span id='amtlogin__assignmentid'></span></h3>
+                <h4>Worker ID: <span id='amtlogin__workerid'></span></h4>
+                <h4>HIT ID: <span id='amtlogin__hitid'></span></h4>
+                <h4>Assignment ID: <span id='amtlogin__assignmentid'></span></h4>
             </div>
             <div class="col"></div>
         </div>
@@ -46,7 +46,11 @@
             <div class="col"></div>
         </div>
         <div class="row">
-            <p class="amtlogin_error">Oops, something went wrong! Your AMT information did not transfer correctly. Please close this tab and retry the experiment link on the AMT page. If the problem persists, please return the HIT and let the requester know.</p>
+            <div class="col"></div>
+            <div class="col-6">
+                <p class="amtlogin_error">Oops, something went wrong! Your AMT information did not transfer correctly. Please close this tab and retry the experiment link on the AMT page. If the problem persists, please return the HIT and send an email to the requester.</p>
+            </div>
+            <div class="col"></div>
         </div>
     </div>
 
