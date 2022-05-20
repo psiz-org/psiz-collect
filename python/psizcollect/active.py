@@ -45,9 +45,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import psiz.catalog
-import psiz.dimensionality
-import psiz.generators
-import psiz.models
+import psiz.trials
+# import psiz.models
 import psizcollect.amt
 import psizcollect.pipes as pzc_host
 import psizcollect.utils as pzc_utils

@@ -169,6 +169,7 @@ function clientInfo() {
 
     return {browser: browserName, platform: userPlatform, language: browserLanguage};
 }
+// TODO add full navigator.userAgent to returned json
 
 function Console_Debug(debugOn, msg) {
     if (debugOn == true) {

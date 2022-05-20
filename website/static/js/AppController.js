@@ -686,7 +686,15 @@ var AppController = function(stimulusList, appState) {
     // added dynamically.
     $('.message__content').on('click', '.message__button', function() {
         if ($(".message__button").hasClass("custom-button--enabled")) {
-            appState.docketIdx += 1;
+            // Grab attached data from message button indicating how the
+            // docket index should be changed.
+            var deltaDocket = $(".message__button").data('docketDelta')
+            if (typeof page_name === 'undefined'){
+                deltaDocket = 1
+            }
+
+            // Change docket index based on attached data.
+            appState.docketIdx = appState.docketIdx + deltaDocket;
             uiUpdateDocketProgress();
 
             // Now that page is finished, update sessionStorage to save progress.

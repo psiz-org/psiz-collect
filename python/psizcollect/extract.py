@@ -43,7 +43,7 @@ import mysql.connector
 import numpy as np
 import pandas as pd
 import psiz.trials
-import psiz.preprocess
+import psizcollect.preprocess as pzc_preprocess
 import psizcollect.pipes
 
 # Consants used/assumed in the MySQL database.
@@ -91,7 +91,7 @@ def extract_observations(
         correspond to a string used in the `project_id` column of the
             `assignments` table.
         grade_mode (optional): The grade mode to use when grading catch trials.
-            See psiz.preprocessing.grade_catch_trials for details
+            See psizcollect.preproces.grade_catch_trials for details
             regarding the accepted inputs.
         grade_threshold (optional): The grading threshold to use for
             determining if an assignment should be accepted or dropped.
@@ -318,7 +318,7 @@ def assemble_accepted_obs(
             dict_meta['avg_trial_rt'][idx] = np.mean(obs_agent.rt_ms)
             dict_meta['n_trial'][idx] = n_trial
             (avg_grade, _, is_catch) = (
-                psiz.preprocess.grade_catch_trials(
+                pzc_preprocess.grade_catch_trials(
                     obs_agent, grade_mode=grade_mode
                 )
             )
@@ -351,7 +351,7 @@ def assemble_accepted_obs(
             if dict_meta['status_code'][idx] == STATUS_CREATED:
                 update_status(my_cxn, assignment_id, STATUS_EXPIRED)
 
-    # obs = psiz.preprocess.remove_catch_trials(obs)
+    # obs = pzc_preprocess.remove_catch_trials(obs)
     df_meta = pd.DataFrame.from_dict(dict_meta)
 
     return obs, df_meta
