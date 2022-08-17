@@ -142,7 +142,7 @@ By requiring filepaths, you can create projects that source stimuli from many di
 If you are looking for a method to help create this file for an existing directory of stimuli, one option is to use the GNU or BSD `find` command. For example, the following command finds all files with .jpg and .png file extensions within the `path/to/dataset` directory:
 
 ```
-find path/to/dataset -type f -iname "*.jpg" -o -iname "*.png" > stimuli.txt
+find /path/to/dataset -type f -iname "*.jpg" -o -iname "*.png" | sort > stimuli.txt
 ```
 
 It is critically important that the order of the stimuli in stimuli.txt file not change once you have started collecting data. Instead of storing filenames, only the indices are stored. It's fine to add additional lines for new stimuli, but do not alter existing lines.
