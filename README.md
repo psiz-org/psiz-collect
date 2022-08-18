@@ -240,5 +240,5 @@ Some summary information is also written to summary.txt
 
 ## Requirements
 
-* PHP 7.4
+* PHP 7.4.3
 * Python >= 3.5
