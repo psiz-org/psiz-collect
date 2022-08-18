@@ -1,4 +1,4 @@
-# ![Alt](static/icon/favicon-32x32.png "PsiZ Logo") PsiZ Collect
+# ![Alt](website/static/icon/favicon-32x32.png "PsiZ Logo") PsiZ Collect
 
 PsiZ Collect is intended to be a template for creating a web-based application for collecting human similarity judgments. It has been designed to minimize deployment effort. Since it is a web-based application, some assembly is required. Once data is collected, it can be analyzed using the *psiz* python package which can be cloned from [GitHub](https://github.com/roads/psiz).
 
