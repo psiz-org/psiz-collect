@@ -237,3 +237,8 @@ into a psiz.trials.RankObservations object.
 obs will be created and placed in a directory with the same name as the provided project ID. Any existing data will be over-written.
 
 Some summary information is also written to summary.txt
+
+## Requirements
+
+* PHP 7.4
+* Python >= 3.5
