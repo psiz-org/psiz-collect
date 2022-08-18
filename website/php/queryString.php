@@ -5,11 +5,11 @@
  *
  */
 
-$projectId = $_GET["projectId"];
-$workerId = $_GET["workerId"];
-$assignmentId = $_GET["assignmentId"];
-$hitId = $_GET["hitId"];
-$turkSubmitTo = $_GET["turkSubmitTo"];
+$projectId = isset($_GET["projectId"]) ? : "";
+$workerId = isset($_GET["workerId"]) ? $_GET["workerId"] : "";
+$assignmentId = isset($_GET["assignmentId"]) ? $_GET["assignmentId"] : "";
+$hitId = isset($_GET["hitId"]) ? $_GET["hitId"] : "";
+$turkSubmitTo = isset($_GET["turkSubmitTo"]) ? : "";
 
 $info = array(
     "projectId"=>$projectId, "workerId"=>$workerId,

@@ -140,12 +140,13 @@
             launchController();
         }
     });
-
+    
     function launchController() {
         var dataToPost = {
             appState: JSON.stringify(appState)
         }
         var fetchProject = $.post("/php/initialize.php", dataToPost, function(result) {
+            console.log(result)
             var projectConfig = JSON.parse(result);
             stimulusList = projectConfig["stimulusList"];
             appState = projectConfig["appState"];
