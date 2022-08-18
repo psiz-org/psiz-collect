@@ -15,7 +15,7 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
 
-    <link rel='stylesheet' href='/collect/static/css/general-001.css'>
+    <link rel='stylesheet' href='/static/css/general-001.css'>
 </head>
 
 <body>
@@ -89,8 +89,8 @@
         </div>
     </div>
 
-    <script src="/collect/static/js/AppController.js"></script>
-    <script src="/collect/static/js/utils.js"></script>
+    <script src="/static/js/AppController.js"></script>
+    <script src="/static/js/utils.js"></script>
     <script type="text/javascript">
     var queryVariables = <?php require "php/querystring-parameters.php"; ?>;
     var client = clientInfo();
@@ -152,7 +152,7 @@
         var dataToPost = {
             appState: JSON.stringify(appState)
         }
-        var fetchProject = $.post("/collect/php/initialize.php", dataToPost, function(result) {
+        var fetchProject = $.post("/php/initialize.php", dataToPost, function(result) {
             var projectConfig = JSON.parse(result);
             stimulusList = projectConfig["stimulusList"];
             appState = projectConfig["appState"];

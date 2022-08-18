@@ -254,7 +254,7 @@ var AppController = function(stimulusList, appState) {
                     amtHitId: appState.amtHitId,
                 };
                 // Create new voucher entry in database.
-                $.post("/collect/php/post-voucher.php", dataToPost, function(voucherStatus) {
+                $.post("/php/post-voucher.php", dataToPost, function(voucherStatus) {
                     console.log("voucher status: " + voucherStatus);
                     if (voucherStatus != "0") {
                         appState.voucherCode = voucherStatus;
@@ -538,7 +538,7 @@ var AppController = function(stimulusList, appState) {
             var dataToPost = {
                 appState: JSON.stringify(appState)
             }
-            var postData = $.post( "/collect/php/postObs.php", dataToPost, function(result) {
+            var postData = $.post( "/php/postObs.php", dataToPost, function(result) {
                 var returnedMsg = JSON.parse(result);
                 console.log(returnedMsg);
                 appState.postStatus = 1;

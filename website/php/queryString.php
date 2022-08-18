@@ -5,11 +5,11 @@
  *
  */
 
-$projectId = $_GET[projectId];
-$workerId = $_GET[workerId];
-$assignmentId = $_GET[assignmentId];
-$hitId = $_GET[hitId];
-$turkSubmitTo = $_GET[turkSubmitTo];
+$projectId = $_GET["projectId"];
+$workerId = $_GET["workerId"];
+$assignmentId = $_GET["assignmentId"];
+$hitId = $_GET["hitId"];
+$turkSubmitTo = $_GET["turkSubmitTo"];
 
 $info = array(
     "projectId"=>$projectId, "workerId"=>$workerId,
