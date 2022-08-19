@@ -238,7 +238,8 @@ obs will be created and placed in a directory with the same name as the provided
 
 Some summary information is also written to summary.txt
 
-## Requirements
+## Requirements / tested with
 
 * PHP 7.4.3
+* MySQL 8.0
 * Python >= 3.5
