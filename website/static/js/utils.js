@@ -1,12 +1,12 @@
 // Returns a random integer between min (included) and max (excluded)
 // Using Math.round() will give you a non-uniform distribution!
 function getRandomInt(min, max) {
-  return Math.floor(Math.random() * (max - min)) + min;
+    return Math.floor(Math.random() * (max - min)) + min;
 }
 
 function range0toNminus1(N) {
     var foo = [];
-    for (var i = 0; i <= N-1; i++) {
+    for (var i = 0; i <= N - 1; i++) {
         foo.push(i);
     }
     return foo
@@ -68,7 +68,7 @@ function ones(nRows, nColumns) {
 function drawFromMultinomial(weights) {
     // Returns index [0, n-1] (i.e., Javascript array index formatting)
     // Normalize weights
-    var nCat =  weights.length;
+    var nCat = weights.length;
     var normFactor = sumArray(weights);
     var normWeights = [];
     var totalCdf = 0;
@@ -103,71 +103,70 @@ function clientInfo() {
 
     var nVer = navigator.appVersion;
     var nAgt = navigator.userAgent;
-    var browserName  = navigator.appName;
-    var fullVersion  = ''+parseFloat(navigator.appVersion);
-    var majorVersion = parseInt(navigator.appVersion,10);
-    var nameOffset,verOffset,ix;
+    var browserName = navigator.appName;
+    var fullVersion = '' + parseFloat(navigator.appVersion);
+    var majorVersion = parseInt(navigator.appVersion, 10);
+    var nameOffset, verOffset, ix;
 
     // In Opera 15+, the true version is after "OPR/"
-    if ((verOffset=nAgt.indexOf("OPR/"))!=-1) {
-     browserName = "Opera";
-     fullVersion = nAgt.substring(verOffset+4);
+    if ((verOffset = nAgt.indexOf("OPR/")) != -1) {
+        browserName = "Opera";
+        fullVersion = nAgt.substring(verOffset + 4);
     }
     // In older Opera, the true version is after "Opera" or after "Version"
-    else if ((verOffset=nAgt.indexOf("Opera"))!=-1) {
-     browserName = "Opera";
-     fullVersion = nAgt.substring(verOffset+6);
-     if ((verOffset=nAgt.indexOf("Version"))!=-1)
-       fullVersion = nAgt.substring(verOffset+8);
+    else if ((verOffset = nAgt.indexOf("Opera")) != -1) {
+        browserName = "Opera";
+        fullVersion = nAgt.substring(verOffset + 6);
+        if ((verOffset = nAgt.indexOf("Version")) != -1)
+            fullVersion = nAgt.substring(verOffset + 8);
     }
     // In MSIE, the true version is after "MSIE" in userAgent
-    else if ((verOffset=nAgt.indexOf("MSIE"))!=-1) {
-     browserName = "Microsoft Internet Explorer";
-     fullVersion = nAgt.substring(verOffset+5);
+    else if ((verOffset = nAgt.indexOf("MSIE")) != -1) {
+        browserName = "Microsoft Internet Explorer";
+        fullVersion = nAgt.substring(verOffset + 5);
     }
     // In Chrome, the true version is after "Chrome"
-    else if ((verOffset=nAgt.indexOf("Chrome"))!=-1) {
-     browserName = "Chrome";
-     fullVersion = nAgt.substring(verOffset+7);
+    else if ((verOffset = nAgt.indexOf("Chrome")) != -1) {
+        browserName = "Chrome";
+        fullVersion = nAgt.substring(verOffset + 7);
     }
     // In Safari, the true version is after "Safari" or after "Version"
-    else if ((verOffset=nAgt.indexOf("Safari"))!=-1) {
-     browserName = "Safari";
-     fullVersion = nAgt.substring(verOffset+7);
-     if ((verOffset=nAgt.indexOf("Version"))!=-1)
-       fullVersion = nAgt.substring(verOffset+8);
+    else if ((verOffset = nAgt.indexOf("Safari")) != -1) {
+        browserName = "Safari";
+        fullVersion = nAgt.substring(verOffset + 7);
+        if ((verOffset = nAgt.indexOf("Version")) != -1)
+            fullVersion = nAgt.substring(verOffset + 8);
     }
     // In Firefox, the true version is after "Firefox"
-    else if ((verOffset=nAgt.indexOf("Firefox"))!=-1) {
-     browserName = "Firefox";
-     fullVersion = nAgt.substring(verOffset+8);
+    else if ((verOffset = nAgt.indexOf("Firefox")) != -1) {
+        browserName = "Firefox";
+        fullVersion = nAgt.substring(verOffset + 8);
     }
     // In most other browsers, "name/version" is at the end of userAgent
-    else if ( (nameOffset=nAgt.lastIndexOf(' ')+1) <
-              (verOffset=nAgt.lastIndexOf('/')) )
-    {
-     browserName = nAgt.substring(nameOffset,verOffset);
-     fullVersion = nAgt.substring(verOffset+1);
-     if (browserName.toLowerCase()==browserName.toUpperCase()) {
-      browserName = navigator.appName;
-     }
+    else if ((nameOffset = nAgt.lastIndexOf(' ') + 1) <
+        (verOffset = nAgt.lastIndexOf('/'))) {
+        browserName = nAgt.substring(nameOffset, verOffset);
+        fullVersion = nAgt.substring(verOffset + 1);
+        if (browserName.toLowerCase() == browserName.toUpperCase()) {
+            browserName = navigator.appName;
+        }
     }
     // trim the fullVersion string at semicolon/space if present
-    if ((ix=fullVersion.indexOf(";"))!=-1)
-       fullVersion=fullVersion.substring(0,ix);
-    if ((ix=fullVersion.indexOf(" "))!=-1)
-       fullVersion=fullVersion.substring(0,ix);
+    if ((ix = fullVersion.indexOf(";")) != -1)
+        fullVersion = fullVersion.substring(0, ix);
+    if ((ix = fullVersion.indexOf(" ")) != -1)
+        fullVersion = fullVersion.substring(0, ix);
 
-    majorVersion = parseInt(''+fullVersion,10);
+    majorVersion = parseInt('' + fullVersion, 10);
     if (isNaN(majorVersion)) {
-     fullVersion  = ''+parseFloat(navigator.appVersion);
-     majorVersion = parseInt(navigator.appVersion,10);
+        fullVersion = '' + parseFloat(navigator.appVersion);
+        majorVersion = parseInt(navigator.appVersion, 10);
     }
 
     userPlatform = navigator.platform;
     browserLanguage = navigator.language;
 
-    return {browser: browserName, platform: userPlatform, language: browserLanguage};
+    return { browser: browserName, platform: userPlatform, language: browserLanguage };
 }
 // TODO add full navigator.userAgent to returned json
 
@@ -178,28 +177,28 @@ function Console_Debug(debugOn, msg) {
 }
 
 function basename(path) {
-   return path.split(/[\\/]/).pop();
+    return path.split(/[\\/]/).pop();
 }
 
 // Local and Session Storage helpers for objects
-Storage.prototype.setObject = function(key, value) {
+Storage.prototype.setObject = function (key, value) {
     this.setItem(key, JSON.stringify(value));
 }
 
-Storage.prototype.getObject = function(key) {
+Storage.prototype.getObject = function (key) {
     var value = this.getItem(key);
     return value && JSON.parse(value);
 }
 
 function preload(arrayOfImages) {
-    $(arrayOfImages).each(function(){
+    $(arrayOfImages).each(function () {
         $('<img/>')[0].src = this;
         // Alternatively you could use:
         // (new Image()).src = this;
     });
 }
 
-function onlyUnique(value, index, self) { 
+function onlyUnique(value, index, self) {
     return self.indexOf(value) === index;
 }
 
@@ -212,6 +211,6 @@ function pad(n, width, z) {
 function clientTimestamp() {
     // Note that d.getMonth() is zero-based.
     var d = new Date();
-    timestampStr = "" + d.getFullYear() + "-" + pad(d.getMonth() + 1,2) + "-" + pad(d.getDate(), 2) + " " + pad(d.getHours(), 2) + ":" + pad(d.getMinutes(), 2) + ":" + pad(d.getSeconds(), 2);
+    timestampStr = "" + d.getFullYear() + "-" + pad(d.getMonth() + 1, 2) + "-" + pad(d.getDate(), 2) + " " + pad(d.getHours(), 2) + ":" + pad(d.getMinutes(), 2) + ":" + pad(d.getSeconds(), 2);
     return timestampStr;
 }

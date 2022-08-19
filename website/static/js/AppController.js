@@ -16,16 +16,16 @@
 class Stopwatch {
 
     constructor() {
-      this.totalMs = 0;
-      this.startMs = 0;
-      this.running = false;
+        this.totalMs = 0;
+        this.startMs = 0;
+        this.running = false;
     }
-  
+
     start() {
         this.startMs = new Date().getTime();
         this.running = true;
     }
-    
+
     stop() {
         var stopMs = new Date().getTime();
         this.totalMs = this.totalMs + (stopMs - this.startMs);
@@ -49,10 +49,10 @@ class Stopwatch {
         this.startMs = 0;
         this.running = false;
     }
-  
+
 }
 
-var AppController = function(stimulusList, appState) {
+var AppController = function (stimulusList, appState) {
 
     // Constants.
     var CHOICE_TILES = ['choice-tile-A', 'choice-tile-B', 'choice-tile-C', 'choice-tile-D', 'choice-tile-E', 'choice-tile-F', 'choice-tile-G', 'choice-tile-H'];
@@ -157,7 +157,7 @@ var AppController = function(stimulusList, appState) {
         // see: http://stackoverflow.com/questions/8645143/wait-for-image-to-be-loaded-before-going-on
         var deferred = $.Deferred();
         var img = new Image();
-        img.onload = function() {
+        img.onload = function () {
             deferred.resolve();
         };
         img.src = fname;
@@ -169,7 +169,7 @@ var AppController = function(stimulusList, appState) {
         // see: http://stackoverflow.com/questions/8645143/wait-for-image-to-be-loaded-before-going-on
         var deferred = $.Deferred();
         var video = document.createElement("video");
-        video.oncanplay = function() {
+        video.oncanplay = function () {
             deferred.resolve();
         };
         video.setAttribute("src", fname);
@@ -182,7 +182,7 @@ var AppController = function(stimulusList, appState) {
         // see: http://stackoverflow.com/questions/8645143/wait-for-image-to-be-loaded-before-going-on
         var deferred = $.Deferred();
         var audio = document.createElement("AUDIO");
-        audio.oncanplay = function() {
+        audio.oncanplay = function () {
             deferred.resolve();
         };
         audio.setAttribute("src", fname);
@@ -207,7 +207,7 @@ var AppController = function(stimulusList, appState) {
                     $(".grid").show(0);
                     startTrial(appState);
                     break;
-            }            
+            }
         }
     }
 
@@ -228,9 +228,9 @@ var AppController = function(stimulusList, appState) {
                 $(".is-ranked").show();
             }
         }
-        
-        $.when.apply(null, loaders).done(function() {
-        // Callback when everything has finished loading.
+
+        $.when.apply(null, loaders).done(function () {
+            // Callback when everything has finished loading.
             uiSetStimuli(trial);
             uiShowTiles(trial);
             stopwatch.reset();
@@ -242,7 +242,7 @@ var AppController = function(stimulusList, appState) {
     function finishSession(appState) {
         // Session finished.
         postSession(appState);
-        
+
         // Get voucher code.
         if (appState.amtAssignmentId != "") {
             $(".voucher").show();
@@ -254,14 +254,14 @@ var AppController = function(stimulusList, appState) {
                     amtHitId: appState.amtHitId,
                 };
                 // Create new voucher entry in database.
-                $.post("/php/post-voucher.php", dataToPost, function(voucherStatus) {
+                $.post("/php/post-voucher.php", dataToPost, function (voucherStatus) {
                     console.log("voucher status: " + voucherStatus);
                     if (voucherStatus != "0") {
                         appState.voucherCode = voucherStatus;
                         sessionStorage.setObject(appState.projectId, appState);
                         $("#voucher__code").text(appState.voucherCode);
                     }
-                }).fail( function (xhr, status, error) {
+                }).fail(function (xhr, status, error) {
                     console.log("Post using post-voucher.php failed.");
                     console.log(status);
                     console.log(error);
@@ -324,7 +324,7 @@ var AppController = function(stimulusList, appState) {
 
         $("#query-tile").show();
 
-        for (var iChoice=0; iChoice < N_CHOICE_TILE; iChoice++) {
+        for (var iChoice = 0; iChoice < N_CHOICE_TILE; iChoice++) {
             if (iChoice < nChoice) {
                 $('#' + CHOICE_TILES[iChoice]).show();
             } else {
@@ -446,7 +446,7 @@ var AppController = function(stimulusList, appState) {
         // Add selected text.
         var $tileBanner = $("#" + tileId).find(".tile__banner");
         if (selectionState.isRanked) {
-            $tileBanner.text(RANKING_TEXT[order-1] + ' Most Similar');
+            $tileBanner.text(RANKING_TEXT[order - 1] + ' Most Similar');
         } else {
             $tileBanner.text('Similar');
         }
@@ -482,11 +482,11 @@ var AppController = function(stimulusList, appState) {
 
         // Loop over all tiles to move any currently selected tiles up in ranking if they came after unselected tile
         for (var iTile = 0; iTile < selectionState.nChoice; iTile++) {
-            if ((selectionState.isTileSelected[iTile] != 0) & (selectionState.isTileSelected[iTile] > oldSelectionOrder) ) {
+            if ((selectionState.isTileSelected[iTile] != 0) & (selectionState.isTileSelected[iTile] > oldSelectionOrder)) {
                 var order = selectionState.isTileSelected[iTile] - 1;
                 var $tileBanner = $("#" + CHOICE_TILES[iTile]).find(".tile__banner");
                 if (selectionState.isRanked) {
-                    $tileBanner.text(RANKING_TEXT[order-1] + ' Most Similar');
+                    $tileBanner.text(RANKING_TEXT[order - 1] + ' Most Similar');
                 } else {
                     $tileBanner.text('Similar');
                 }
@@ -532,18 +532,17 @@ var AppController = function(stimulusList, appState) {
         $('.docket-progress__bar').width(progressValue + "%");
     }
 
-    function postSession(appState){
+    function postSession(appState) {
         // Post obs, update status.
-        if (appState.postStatus == ""){
+        if (appState.postStatus == "") {
             var dataToPost = {
                 appState: JSON.stringify(appState)
             }
-            var postData = $.post( "/php/postObs.php", dataToPost, function(result) {
+            var postData = $.post("/php/postObs.php", dataToPost, function (result) {
                 var returnedMsg = JSON.parse(result);
-                console.log(returnedMsg);
                 appState.postStatus = 1;
                 sessionStorage.setObject(appState.projectId, appState);
-            }).fail(function(err, status) {
+            }).fail(function (err, status) {
                 console.log(err);
                 console.log(status);
             });
@@ -579,40 +578,40 @@ var AppController = function(stimulusList, appState) {
         trial.submitRtMs = submitTimeMs;
     }
 
-    $("#grid__info-button").click( function() {
+    $("#grid__info-button").click(function () {
         stopwatch.stop();
         $('.overlay-instructions').show();
     });
 
-    $("#overlay-instructions-button").click( function () {
+    $("#overlay-instructions-button").click(function () {
         stopwatch.start();
         $('.overlay-instructions').hide();
     });
 
-    $("#grid__sound-button").click( function() {
-        if( $("video").prop('muted') ) {
+    $("#grid__sound-button").click(function () {
+        if ($("video").prop('muted')) {
             $("video").prop('muted', false);
             $("#grid__sound-button").html('<i class="fas fa-volume-up"></i>')
         } else {
             $("video").prop('muted', true);
             $("#grid__sound-button").html('<i class="fas fa-volume-mute"></i>')
-      }
+        }
     });
 
     $(".tile").hover(
-        function() {
+        function () {
             var tileId = this.id;
             var video = $("#" + tileId).find(".tile__video");
             var videoSrcVal = $(video).find('.tile__video-source').attr('src');
             var audio = $("#" + tileId).find(".tile__audio");
             var audioSrcVal = $(audio).find('.tile__audio-source').attr('src');
             if (videoSrcVal != "") {
-                $(video)[0].play();            
+                $(video)[0].play();
             }
             if (audioSrcVal != "") {
-                $(audio)[0].play();            
+                $(audio)[0].play();
             }
-        }, function(){
+        }, function () {
             var tileId = this.id;
             var video = $("#" + tileId).find(".tile__video");
             var videoSrcVal = $(video).find('.tile__video-source').attr('src');
@@ -622,12 +621,12 @@ var AppController = function(stimulusList, appState) {
                 $(video)[0].pause();
             }
             if (audioSrcVal != "") {
-                $(audio)[0].pause();            
+                $(audio)[0].pause();
             }
-    });
+        });
 
     // Update the seek bar as the video plays
-    $('.tile__video').on('timeupdate', function() {
+    $('.tile__video').on('timeupdate', function () {
         var video = $(this);
         // Calculate the slider value
         var value = (100 / video[0].duration) * video[0].currentTime;
@@ -636,7 +635,7 @@ var AppController = function(stimulusList, appState) {
         progressBar.width(value + "%");
     });
 
-    $('.tile__audio').on('timeupdate', function() {
+    $('.tile__audio').on('timeupdate', function () {
         var audio = $(this);
         // Calculate the slider value
         var value = (100 / audio[0].duration) * audio[0].currentTime;
@@ -645,7 +644,7 @@ var AppController = function(stimulusList, appState) {
         progressBar.width(value + "%");
     });
 
-    $(".tile--choice").click( function () {
+    $(".tile--choice").click(function () {
         selectionState = uiTileToggle(this.id, selectionState);
 
         /* Enable / Disable submit button */
@@ -660,7 +659,7 @@ var AppController = function(stimulusList, appState) {
         }
     });
 
-    $("#grid__submit-button").click( function() {
+    $("#grid__submit-button").click(function () {
         if ($("#grid__submit-button").hasClass("custom-button--enabled")) {
             stopwatch.stop()
             submitTimeMs = stopwatch.read();
@@ -684,12 +683,12 @@ var AppController = function(stimulusList, appState) {
 
     // Note that we're using on instead of click since message_button is 
     // added dynamically.
-    $('.message__content').on('click', '.message__button', function() {
+    $('.message__content').on('click', '.message__button', function () {
         if ($(".message__button").hasClass("custom-button--enabled")) {
             // Grab attached data from message button indicating how the
             // docket index should be changed.
             var deltaDocket = $(".message__button").data('docketDelta')
-            if (typeof page_name === 'undefined'){
+            if (typeof page_name === 'undefined') {
                 deltaDocket = 1
             }
 
@@ -703,7 +702,7 @@ var AppController = function(stimulusList, appState) {
         }
     });
 
-    $("#voucher__box").click( function() {
+    $("#voucher__box").click(function () {
         $("#voucher__code").focus();
         $("#voucher__code").select();
     });
