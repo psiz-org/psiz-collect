@@ -219,16 +219,18 @@ A python script is included to check the validity of a protocol. If a protocol i
 
 ## Host server organization
 On the web server, the assume directory structure is as follows:
-`.psiz-collect/`
-    `python/`
-        `extract_observations.py`
-    `projects/`
-        `my_project_0/`
-            `obs_dirty.hdf5`
-            `summary.txt`
-        `my_project_1/`
-            `obs_dirty.hdf5`
-            `summary.txt`
+```
+.psiz-collect/
+    python/
+        extract_observations.py
+    projects/
+        my_project_0/
+            obs_dirty.hdf5
+            summary.txt
+        my_project_1/
+            obs_dirty.hdf5
+            summary.txt
+```
 
 ## Miscellaneous
 The Python script `extract_observations.py` is used for parsing MySQL data
