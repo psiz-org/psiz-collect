@@ -222,7 +222,7 @@ On the web server, the assume directory structure is as follows:
 ```
 .psiz-collect/
     python/
-        extract_observations.py
+        extract.py
     projects/
         my_project_0/
             obs_dirty.hdf5
@@ -233,7 +233,7 @@ On the web server, the assume directory structure is as follows:
 ```
 
 ## Miscellaneous
-The Python script `extract_observations.py` is used for parsing MySQL data
+The Python function `extract_observations()` in `extract.py` is used for parsing MySQL data
 into a psiz.trials.RankObservations object.
 
 obs will be created and placed in a directory with the same name as the provided project ID. Any existing data will be over-written.
