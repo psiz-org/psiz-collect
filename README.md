@@ -1,4 +1,4 @@
-# ![Alt](static/icon/favicon-32x32.png "PsiZ Logo") PsiZ Collect
+# ![Alt](website/static/icon/favicon-32x32.png "PsiZ Logo") PsiZ Collect
 
 PsiZ Collect is intended to be a template for creating a web-based application for collecting human similarity judgments. It has been designed to minimize deployment effort. Since it is a web-based application, some assembly is required. Once data is collected, it can be analyzed using the *psiz* python package which can be cloned from [GitHub](https://github.com/roads/psiz).
 
@@ -142,7 +142,7 @@ By requiring filepaths, you can create projects that source stimuli from many di
 If you are looking for a method to help create this file for an existing directory of stimuli, one option is to use the GNU or BSD `find` command. For example, the following command finds all files with .jpg and .png file extensions within the `path/to/dataset` directory:
 
 ```
-find path/to/dataset -type f -iname "*.jpg" -o -iname "*.png" > stimuli.txt
+find /path/to/dataset -type f -iname "*.jpg" -o -iname "*.png" | sort > stimuli.txt
 ```
 
 It is critically important that the order of the stimuli in stimuli.txt file not change once you have started collecting data. Instead of storing filenames, only the indices are stored. It's fine to add additional lines for new stimuli, but do not alter existing lines.
@@ -219,21 +219,30 @@ A python script is included to check the validity of a protocol. If a protocol i
 
 ## Host server organization
 On the web server, the assume directory structure is as follows:
-`.psiz-collect/`
-    `python/`
-        `extract_observations.py`
-    `projects/`
-        `my_project_0/`
-            `obs_dirty.hdf5`
-            `summary.txt`
-        `my_project_1/`
-            `obs_dirty.hdf5`
-            `summary.txt`
+```
+.psiz-collect/
+    python/
+        extract.py
+    projects/
+        my_project_0/
+            obs_dirty.hdf5
+            summary.txt
+        my_project_1/
+            obs_dirty.hdf5
+            summary.txt
+```
 
 ## Miscellaneous
-The Python script `extract_observations.py` is used for parsing MySQL data
+The Python function `extract_observations()` in `extract.py` is used for parsing MySQL data
 into a psiz.trials.RankObservations object.
 
 obs will be created and placed in a directory with the same name as the provided project ID. Any existing data will be over-written.
 
 Some summary information is also written to summary.txt
+
+## Requirements / tested with
+
+* PHP 8.1.9
+* MySQL 8.0
+* Apache 2.4.54
+* Python 3.9
