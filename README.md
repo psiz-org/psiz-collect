@@ -242,4 +242,5 @@ Some summary information is also written to summary.txt
 
 * PHP 7.4.3
 * MySQL 8.0
+* Apache/2.4.54
 * Python >= 3.5
