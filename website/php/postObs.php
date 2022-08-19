@@ -52,8 +52,8 @@ function updateAssignmentStatus($link, $assignmentId) {
 $dirCollect = getenv('DIR_COLLECT');
 require $dirCollect."/php/utils.php";
 
+$appState = json_decode($_POST["appState"], true);
 $dirProject = joinPaths($dirCollect, "projects", $appState["projectId"]);
-$appState = json_decode($_POST[appState], true);
 $assignmentId = $appState["assignmentId"];
 
 // Connect to database.

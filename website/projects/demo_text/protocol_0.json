@@ -2,7 +2,7 @@
     "docket": [
         {
             "content": "blockSpec",
-            "nTrial": 30,
+            "nTrial": 5,
             "nCatch": 1,
             "nReference": 2,
             "nSelect": 1,
