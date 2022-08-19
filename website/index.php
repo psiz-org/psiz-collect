@@ -1,12 +1,14 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
 	<title>Collect - PsiZ</title>
-	<meta charset="UTF-8">
+	<meta charset="utf-8">
 	<meta name="keywords" content="HTML, CSS, XML, XHTML, JavaScript">
 	<meta name="description" content="PsiZ Collect">
     <meta name="author" content="B. D. Roads">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
 
     <!-- jQuery library -->
     <script src="https://code.jquery.com/jquery-3.3.1.js" integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60=" crossorigin="anonymous"></script>
@@ -17,7 +19,7 @@
 
     <!-- Note: psiz-collection assets must be loaded by going up a directory
     since re-write rule places the active experiment in a subdirectory. -->
-    <link rel='stylesheet' href='/collect/static/css/general-001.css'>
+    <link rel='stylesheet' href='/static/css/general-001.css'>
 </head>
 
 <body>
@@ -78,9 +80,13 @@
         </div>
     </div>
 
-    <script src="/collect/static/js/AppController.js"></script>
-    <script src="/collect/static/js/utils.js"></script>
-    <script type="text/javascript">
+    <script src="/static/js/AppController.js" charset="UTF-8"></script>
+    <script src="/static/js/utils.js" charset="UTF-8"></script>
+    
+    <script type="text/javascript" charset="UTF-8">
+    </script>
+    
+    <script type="text/javascript" charset="UTF-8">
     var queryVariables = <?php require "./php/querystring-parameters.php"; ?>;
     var client = clientInfo();
 
@@ -134,12 +140,12 @@
             launchController();
         }
     });
-
+    
     function launchController() {
         var dataToPost = {
             appState: JSON.stringify(appState)
         }
-        var fetchProject = $.post("/collect/php/initialize.php", dataToPost, function(result) {
+        var fetchProject = $.post("/php/initialize.php", dataToPost, function(result) {
             var projectConfig = JSON.parse(result);
             stimulusList = projectConfig["stimulusList"];
             appState = projectConfig["appState"];

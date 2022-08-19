@@ -237,7 +237,7 @@ function selectProtocol($dirProject, $protocolHistory) {
 $dirCollect = getenv('DIR_COLLECT');
 require $dirCollect."/php/utils.php";
 
-$appState = json_decode($_POST[appState], true);
+$appState = json_decode($_POST["appState"], true);
 
 $dirProject = joinPaths($dirCollect, "projects", $appState["projectId"]);
 
