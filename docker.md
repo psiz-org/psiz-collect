@@ -7,13 +7,19 @@ This example uses images as stimuli.
 
 `git clone https://github.com/psiz-org/psiz-collect`
 
-## Create docker network
+## Option 1: With docker-compose
+
+`docker-compose up`
+
+## Option 2: Create containers manually
+
+### Create docker network
 
 `docker network create psiz`
 
-## Create app container
+### Create app container
 
-### Create `mysql_credentials` file on server in `psiz-collect/` directory
+#### Create `mysql_credentials` file on server in `psiz-collect/` directory
 
 (Change `password` & `username` to your needs)
 
@@ -28,7 +34,7 @@ database = psiz
 ```
 
 
-### Create container
+#### Create container
 
 (make sure to be in the `psiz-collect/` directory)
 
@@ -36,13 +42,13 @@ database = psiz
 docker run -dit --name psiz-app -h psiz-app --net psiz -v "${PWD}"/website:/var/www/html -v "${PWD}"/python:/var/www/python -v "${PWD}"/mysql_credentials:/var/opt/mysql_credentials -p 9090:80 -e DIR_COLLECT=/var/www/html -e MYSQL_CRED=/var/opt/mysql_credentials php:8.1-apache
 ```
 
-### Install mysql in psiz-app container
+#### Install mysql in psiz-app container
 
 `docker exec -it psiz-app docker-php-ext-install mysqli pdo pdo_mysql`
 
 `docker exec -it psiz-app service apache2 reload`
 
-### Create project
+#### Create project
 
 1) Create folder (e.g. `rocks`) inside `psiz-collect/website/projects/` folder
 2) Copy image files (`.png` or `.jpg`) into this folder
@@ -69,17 +75,17 @@ Example:
    ]
 }
 ```
-## Create database container
+### Create database container
 
-### Create container
+#### Create container
 (make sure to be in the `psiz-collect/` directory and that `MYSQL_USER`, `MYSQL_PASSWORD` & `MYSQL_DATABASE` match above created `mysql_credentials` file)
 )
 
 ```
-docker run -it --name psiz-db -h psiz-db --net psiz -e MYSQL_ROOT_PASSWORD=psiz -e MYSQL_USER=psiz -e MYSQL_PASSWORD=psiz -e MYSQL_DATABASE=psiz -v "${PWD}/sql":/opt -p 3306:3306 mysql
+docker run -dit --name psiz-db -h psiz-db --net psiz -e MYSQL_ROOT_PASSWORD=psiz -e MYSQL_USER=psiz -e MYSQL_PASSWORD=psiz -e MYSQL_DATABASE=psiz -v "${PWD}/sql":/opt -p 3306:3306 mysql
 ```
 
-### Create database inside container
+#### Create database inside container
 
 `docker exec -it psiz-db bash`
 
@@ -87,7 +93,7 @@ docker run -it --name psiz-db -h psiz-db --net psiz -e MYSQL_ROOT_PASSWORD=psiz 
 
 `mysql> SOURCE /opt/install_db_psiz.sql;`
 
-## Access the app
+### Access the app
 
 (Change `projectId` host and port according to your needs)
 
