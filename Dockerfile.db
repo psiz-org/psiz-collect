@@ -1,0 +1,10 @@
+FROM mysql:latest
+
+ENV MYSQL_ROOT_PASSWORD=psiz
+ENV MYSQL_USER=psiz
+ENV MYSQL_PASSWORD=psiz
+ENV MYSQL_DATABASE=psiz
+
+COPY sql/install_db_psiz.sql /docker-entrypoint-initdb.d/
+
+EXPOSE 3306
