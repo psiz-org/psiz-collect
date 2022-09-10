@@ -3,14 +3,15 @@ version: '3.7'
 services:
   psiz-app:
     build:
+      context: .
       dockerfile: Dockerfile.app
     image: psiz-app
     hostname: psiz-app
     container_name: psiz-app
-    volumes:
-      - ./website:/var/www/html
-      - ./python:/var/www/python
-      - ./mysql_credentials:/var/opt/mysql_credentials
+    # volumes:
+    #   - ./website:/var/www/html
+    #   - ./python:/var/www/python
+    #   - ./mysql_credentials:/var/opt/mysql_credentials
     restart: always
     ports:
       - "80:80"
@@ -20,6 +21,7 @@ services:
           - psiz-app
   psiz-db:
     build:
+      context: .
       dockerfile: Dockerfile.db
     image: psiz-db
     container_name: psiz-db
@@ -31,10 +33,10 @@ services:
       psiz:
         aliases:
           - psiz-db
-volumes:
-    website:
-    python:
-    mysql_credentials:
+# volumes:
+#     website:
+#     python:
+#     mysql_credentials:
 networks:
     psiz:
 
